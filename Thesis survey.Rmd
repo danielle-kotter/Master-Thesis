@@ -1,0 +1,32 @@
+---
+title: "Thesis survey"
+date: "`r format(Sys.Date(), '%d %B, %Y')`"
+output:
+  pagedown::html_paged:
+    css: www/my_css.css
+    number_sections: no
+knit: pagedown::chrome_print
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, class.source = "watch-out", options(scipen=999), out.width = "65%", warning = FALSE, comment = "") 
+source("www/init.R")
+source("www/Table_Design.R")
+```
+
+```{r, echo=FALSE}
+htmltools::img(
+  src = knitr::image_uri(file.path("www/BSM_Logo.png")), 
+  alt = 'logo', 
+  style = 'position:absolute; top:0; right:5px; padding:10px; width:200px'
+)
+```
+
+```{r data, echo=FALSE, include=FALSE}
+data <- read_csv("Life Expectancy Data.csv")
+attach(data)
+
+paletteDani <- c("#35816F", "#69b3a2", "#555A5B", "#9B9B9B", "#45DAD7", "3C9FAA", "#084033")
+```
+
+
