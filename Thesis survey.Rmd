@@ -9,7 +9,7 @@ knit: pagedown::chrome_print
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, class.source = "watch-out", options(scipen=999), out.width = "65%", warning = FALSE, comment = "") 
+knitr::opts_chunk$set(echo = FALSE, class.source = "watch-out", options(scipen=999), out.width = "65%", warning = FALSE, comment = "") 
 source("www/init.R")
 source("www/Table_Design.R")
 ```
@@ -26,7 +26,7 @@ htmltools::img(
 data <- read_excel("Main doc survey.xlsx")
 attach(data)
 
-dani <- c( "#ffa500", "#DAF7A6", "#ee5c42", "#69b3a2", "#ffd561", "#47ce8e", "#5c3170", "#990000", "#C70039", "#34495E", "#909497")
+dani <- c( "#ffa500", "#DAF7A6", "#34495E", "#69b3a2", "#ffd561", "#ee5c42", "#5c3170", "#990000", "#C70039", "#34495E", "#909497")
 
 pal9 <- jcolors("pal9")
 ```
@@ -84,7 +84,8 @@ ggplot(dataB, aes(x="",y = value, fill = group)) +
   coord_polar("y", start = 0) +
   scale_fill_manual("Age category:", values = dani)+
   blank_theme  +
-    theme(axis.text.x=element_blank()) +
+    theme(axis.text.x=element_blank(), 
+          legend.title = element_text(face = "bold")) +
   geom_text(aes(x = 1.1, label = value),
               position = position_stack(vjust = 0.5),
               size = 3) +
@@ -131,7 +132,8 @@ ggplot(dataB, aes(x="",y = value, fill = group)) +
   coord_polar("y", start = 0) +
   scale_fill_manual("Home description:", values = dani)+
   blank_theme  +
-    theme(axis.text.x=element_blank()) +
+    theme(axis.text.x=element_blank(), 
+          legend.title = element_text(face = "bold")) +
   geom_text(aes(x = 1.1, label = value),
               position = position_stack(vjust = 0.5),
               size = 3) +
@@ -178,7 +180,8 @@ ggplot(dataB, aes(x="",y = value, fill = group)) +
   coord_polar("y", start = 0) +
   scale_fill_manual("Gender:", values = dani)+
   blank_theme  +
-    theme(axis.text.x=element_blank()) +
+    theme(axis.text.x=element_blank(), 
+          legend.title = element_text(face = "bold")) +
   geom_text(aes(x = 1.1, label = value),
               position = position_stack(vjust = 0.5),
               size = 3) +
@@ -225,7 +228,8 @@ ggplot(dataB, aes(x="",y = value, fill = group)) +
   coord_polar("y", start = 0) +
   scale_fill_manual("Education:", values = dani)+
   blank_theme  +
-    theme(axis.text.x=element_blank()) +
+    theme(axis.text.x=element_blank(), 
+          legend.title = element_text(face = "bold")) +
   geom_text(aes(x = 1.1, label = value),
               position = position_stack(vjust = 0.5),
               size = 3) +
@@ -273,7 +277,8 @@ ggplot(dataB, aes(x="",y = value, fill = group)) +
   coord_polar("y", start = 0) +
   scale_fill_manual("Machine:", values = dani)+
   blank_theme  +
-    theme(axis.text.x=element_blank()) +
+    theme(axis.text.x=element_blank(), 
+          legend.title = element_text(face = "bold")) +
   geom_text(aes(x = 1.1, label = value),
               position = position_stack(vjust = 0.5),
               size = 3) +
@@ -321,7 +326,8 @@ ggplot(dataB, aes(x="",y = value, fill = group)) +
   coord_polar("y", start = 0) +
   scale_fill_manual("Brand chouce:", values = dani)+
   blank_theme  +
-    theme(axis.text.x=element_blank()) +
+    theme(axis.text.x=element_blank(), 
+          legend.title = element_text(face = "bold")) +
   geom_text(aes(x = 1.1, label = value),
               position = position_stack(vjust = 0.5),
               size = 3) +
@@ -369,7 +375,8 @@ ggplot(dataB, aes(x="",y = value, fill = group)) +
   coord_polar("y", start = 0) +
   scale_fill_manual("Purchase method:", values = dani)+
   blank_theme  +
-    theme(axis.text.x=element_blank()) +
+    theme(axis.text.x=element_blank(), 
+          legend.title = element_text(face = "bold")) +
   geom_text(aes(x = 1.1, label = value),
               position = position_stack(vjust = 0.5),
               size = 3) +
@@ -377,6 +384,81 @@ ggplot(dataB, aes(x="",y = value, fill = group)) +
          x = "",
          y = ""
          )
+```
+
+#### Purchase decisions 1-5
+
+##### Price
+
+```{r, echo=FALSE}
+Absolute <- data.table(Frequency = table(Purchase_Price))
+Relative <- percent(prop.table(Absolute$Frequency.N))
+freqtable <- cbind(Absolute, Relative)
+colnames(freqtable) <- c("Purchase decision Price", "Absolute", "Relative")
+
+my_table(freqtable)
+```
+
+```{r, echo=FALSE}
+newdata <- data.frame(
+  PurchasePrice=freqtable$`Purchase decision Price`,
+  Frequency=freqtable$Absolute
+)
+
+ggplot(newdata, aes(y = PurchasePrice, x = Frequency)) + 
+  geom_bar(stat = "identity", fill="#69b3a2", color="#e9ecef") +
+  theme(legend.position="none")
+```
+
+```{r, echo=FALSE}
+dataB <- data.frame(
+  group=freqtable$`Purchase decision Price`,
+  value=freqtable$Relative
+)
+
+blank_theme <- theme_minimal()+
+    theme(
+        plot.title = element_text(size = 20, face = "bold")
+    )
+
+ggplot(dataB, aes(x="",y = value, fill = group)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start = 0) +
+  scale_fill_manual("Decision:", values = dani)+
+  blank_theme  +
+    theme(axis.text.x=element_blank(), 
+          legend.title = element_text(face = "bold")) +
+  geom_text(aes(x = 1.1, label = value),
+              position = position_stack(vjust = 0.5),
+              size = 3) +
+  labs(title = "",
+         x = "",
+         y = ""
+         )
+```
+
+
+```{r}
+# library
+library(ggplot2)
+library(viridis)
+library(hrbrthemes)
+
+# create a dataset
+specie <- c(rep("sorgho" , 3) , rep("poacee" , 3) , rep("banana" , 3) , rep("triticum" , 3) )
+condition <- rep(c("normal" , "stress" , "Nitrogen") , 4)
+value <- abs(rnorm(12 , 0 , 15))
+dataN <- data.frame(specie,condition,value)
+ 
+# Graph
+ggplot(dataN, aes(fill=condition, y=value, x=condition)) + 
+    geom_bar(position="dodge", stat="identity") +
+    scale_fill_viridis(discrete = T, option = "E") +
+    ggtitle("Studying 4 species..") +
+    facet_wrap(~specie) +
+    theme_ipsum() +
+    theme(legend.position="none") +
+    xlab("")
 ```
 
 
@@ -501,7 +583,7 @@ ggplot(data = data, aes(App_Likely) ) +
 ```
 
 
-#### Boxplots
+### Boxplots
 
 ```{r, echo=FALSE}
 AmountWeek <- as.numeric(AmountWeek)
@@ -599,4 +681,71 @@ box6 <- ggplot(data=data, aes(x=KnowledgeCoffee, y="", fill="")) +
     xlab("")+
     ylab("Quantity")
 ```
+
+### Parametric testing
+
+Age - Amount coffee drank
+
+```{r}
+chisq.test(AmountWeek, AgeCategory)
+chisq.test(AmountWeek, AgeCategory, simulate.p.value = TRUE, B = 500)
+```
+
+Education - Amount coffee drank
+
+```{r}
+chisq.test(AmountWeek, Education)
+chisq.test(AmountWeek, Education, simulate.p.value = TRUE, B = 500)
+```
+
+Gender - Amount coffee drank
+
+```{r}
+chisq.test(AmountWeek, Gender)
+chisq.test(AmountWeek, Gender, simulate.p.value = TRUE, B = 500)
+```
+
+Home - Amount coffee drank
+
+```{r}
+chisq.test(AmountWeek, Home)
+chisq.test(AmountWeek, Home, simulate.p.value = TRUE, B = 500)
+```
+
+App - Age
+
+```{r}
+chisq.test(App_Likely, AgeCategory)
+chisq.test(App_Likely, AgeCategory, simulate.p.value = TRUE, B = 500)
+```
+
+Coffee knowledge - Age
+
+```{r}
+chisq.test(KnowledgeCoffee, AgeCategory)
+chisq.test(KnowledgeCoffee, AgeCategory, simulate.p.value = TRUE, B = 500)
+```
+
+Coffee knowledge - Purchase location
+
+```{r}
+chisq.test(KnowledgeCoffee, PurchaseLocation)
+chisq.test(KnowledgeCoffee, PurchaseLocation, simulate.p.value = TRUE, B = 500)
+```
+
+### Relationships
+
+```{r, echo=FALSE}
+newdata <- data.frame(AmountWeek, AmountOutMonth, MoneyCoffee, MoneyGroceries, KnowledgeCoffee, Subscription_Likely, App_Likely)
+
+pairs.panels(newdata,
+method = "pearson",
+hist.col = "#00AFBB",
+density = TRUE,
+ellipses = TRUE
+)
+```
+
+
+
 

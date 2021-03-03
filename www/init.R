@@ -34,7 +34,8 @@ packages = c(
   "gridExtra",
   "gtable",
   "lavaan",
-  "sem"
+  "sem",
+  "jcolors"
 )
 
 invisible(
