@@ -23,10 +23,359 @@ htmltools::img(
 ```
 
 ```{r data, echo=FALSE, include=FALSE}
-data <- read_csv("Life Expectancy Data.csv")
+data <- read_excel("Main doc survey.xlsx")
 attach(data)
 
-paletteDani <- c("#35816F", "#69b3a2", "#555A5B", "#9B9B9B", "#45DAD7", "3C9FAA", "#084033")
+pal9 <- c("#35816F", "#69b3a2", "#555A5B", "#9B9B9B", "#45DAD7", "3C9FAA", "#084033", "#084033", "#084033", "#084033", "#084033")
+
+dani <- c("#ffa500", "#0086b", "#ee5c42", "#ffd561", "#47ce8e", "#5c3170", "#990000")
+
+pal9 <- jcolors("pal9")
 ```
 
+
+### Univariate descriptions - Categorical variables
+
+#### Age category
+
+```{r, echo=FALSE}
+Absolute <- data.table(Frequency = table(AgeCategory))
+Relative <- percent(prop.table(Absolute$Frequency.N))
+freqtable <- cbind(Absolute, Relative)
+colnames(freqtable) <- c("Age Category", "Absolute", "Relative")
+
+freqtable[,`Age Category`:= factor(
+ `Age Category`, 
+  levels = c(
+    "< 18", 
+    "18-25", 
+    "25-45", 
+    "45-60",
+    "> 60"
+  )
+)]
+
+setorder(freqtable, `Age Category`)
+
+my_table(freqtable)
+```
+
+```{r, echo=FALSE}
+data <- data.frame(
+  Age=freqtable$`Age Category`,
+  Frequency=freqtable$Absolute
+)
+
+ggplot(data, aes(y = Age, x = Frequency)) + 
+  geom_bar(stat = "identity", fill="#69b3a2", color="#e9ecef") +
+  theme(legend.position="none")
+```
+
+```{r, echo=FALSE}
+dataB <- data.frame(
+  group=freqtable$`Age Category`,
+  value=freqtable$Relative
+)
+
+blank_theme <- theme_minimal()+
+    theme(
+        plot.title = element_text(size = 20, face = "bold")
+    )
+ggplot(dataB, aes(x="",y = value, fill = group)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start = 0) +
+  scale_fill_manual("Age category:", values = pal9)+
+  blank_theme  +
+    theme(axis.text.x=element_blank()) +
+  geom_text(aes(x = 1.1, label = value),
+              position = position_stack(vjust = 0.5),
+              size = 3) +
+  labs(title = "",
+         x = "",
+         y = ""
+         )
+```
+
+#### Home
+
+```{r, echo=FALSE}
+Absolute <- data.table(Frequency = table(Home))
+Relative <- percent(prop.table(Absolute$Frequency.N))
+freqtable <- cbind(Absolute, Relative)
+colnames(freqtable) <- c("Home", "Absolute", "Relative")
+
+my_table(freqtable)
+```
+
+```{r, echo=FALSE}
+data <- data.frame(
+  Home=freqtable$`Home`,
+  Frequency=freqtable$Absolute
+)
+
+ggplot(data, aes(y = Home, x = Frequency)) + 
+  geom_bar(stat = "identity", fill="#69b3a2", color="#e9ecef") +
+  theme(legend.position="none")
+```
+
+```{r, echo=FALSE}
+dataB <- data.frame(
+  group=freqtable$`Home`,
+  value=freqtable$Relative
+)
+
+blank_theme <- theme_minimal()+
+    theme(
+        plot.title = element_text(size = 20, face = "bold")
+    )
+ggplot(dataB, aes(x="",y = value, fill = group)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start = 0) +
+  scale_fill_manual("Home description:", values = pal9)+
+  blank_theme  +
+    theme(axis.text.x=element_blank()) +
+  geom_text(aes(x = 1.1, label = value),
+              position = position_stack(vjust = 0.5),
+              size = 3) +
+  labs(title = "",
+         x = "",
+         y = ""
+         )
+```
+
+#### Gender
+
+```{r, echo=FALSE}
+Absolute <- data.table(Frequency = table(Gender))
+Relative <- percent(prop.table(Absolute$Frequency.N))
+freqtable <- cbind(Absolute, Relative)
+colnames(freqtable) <- c("Gender", "Absolute", "Relative")
+
+my_table(freqtable)
+```
+
+```{r, echo=FALSE}
+data <- data.frame(
+  Gender=freqtable$`Gender`,
+  Frequency=freqtable$Absolute
+)
+
+ggplot(data, aes(y = Gender, x = Frequency)) + 
+  geom_bar(stat = "identity", fill="#69b3a2", color="#e9ecef") +
+  theme(legend.position="none")
+```
+
+```{r, echo=FALSE}
+dataB <- data.frame(
+  group=freqtable$`Gender`,
+  value=freqtable$Relative
+)
+
+blank_theme <- theme_minimal()+
+    theme(
+        plot.title = element_text(size = 20, face = "bold")
+    )
+ggplot(dataB, aes(x="",y = value, fill = group)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start = 0) +
+  scale_fill_manual("Gender:", values = pal9)+
+  blank_theme  +
+    theme(axis.text.x=element_blank()) +
+  geom_text(aes(x = 1.1, label = value),
+              position = position_stack(vjust = 0.5),
+              size = 3) +
+  labs(title = "",
+         x = "",
+         y = ""
+         )
+```
+
+#### Education
+
+```{r, echo=FALSE}
+Absolute <- data.table(Frequency = table(Education))
+Relative <- percent(prop.table(Absolute$Frequency.N))
+freqtable <- cbind(Absolute, Relative)
+colnames(freqtable) <- c("Education", "Absolute", "Relative")
+
+my_table(freqtable)
+```
+
+```{r, echo=FALSE}
+data <- data.frame(
+  Education=freqtable$`Education`,
+  Frequency=freqtable$Absolute
+)
+
+ggplot(data, aes(y = Education, x = Frequency)) + 
+  geom_bar(stat = "identity", fill="#69b3a2", color="#e9ecef") +
+  theme(legend.position="none")
+```
+
+```{r, echo=FALSE}
+dataB <- data.frame(
+  group=freqtable$`Education`,
+  value=freqtable$Relative
+)
+
+blank_theme <- theme_minimal()+
+    theme(
+        plot.title = element_text(size = 20, face = "bold")
+    )
+ggplot(dataB, aes(x="",y = value, fill = group)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start = 0) +
+  scale_fill_manual("Education:", values = pal9)+
+  blank_theme  +
+    theme(axis.text.x=element_blank()) +
+  geom_text(aes(x = 1.1, label = value),
+              position = position_stack(vjust = 0.5),
+              size = 3) +
+  labs(title = "",
+         x = "",
+         y = ""
+         )
+```
+
+#### Machine
+
+```{r, echo=FALSE}
+Absolute <- data.table(Frequency = table(Machine))
+Relative <- percent(prop.table(Absolute$Frequency.N))
+freqtable <- cbind(Absolute, Relative)
+colnames(freqtable) <- c("Machine", "Absolute", "Relative")
+
+my_table(freqtable)
+```
+
+```{r, echo=FALSE}
+data <- data.frame(
+  Machine=freqtable$`Machine`,
+  Frequency=freqtable$Absolute
+)
+
+ggplot(data, aes(y = Machine, x = Frequency)) + 
+  geom_bar(stat = "identity", fill="#69b3a2", color="#e9ecef") +
+  theme(legend.position="none")
+```
+
+```{r, echo=FALSE}
+dataB <- data.frame(
+  group=freqtable$`Machine`,
+  value=freqtable$Relative
+)
+
+blank_theme <- theme_minimal()+
+    theme(
+        plot.title = element_text(size = 20, face = "bold")
+    )
+ggplot(dataB, aes(x="",y = value, fill = group)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start = 0) +
+  scale_fill_manual("Machine:", values = pal9)+
+  blank_theme  +
+    theme(axis.text.x=element_blank()) +
+  geom_text(aes(x = 1.1, label = value),
+              position = position_stack(vjust = 0.5),
+              size = 3) +
+  labs(title = "",
+         x = "",
+         y = ""
+         )
+```
+
+### Univariate descriptions - Numerical variables
+
+#### Boxplots
+
+```{r, echo=FALSE}
+AmountWeek <- as.numeric(AmountWeek)
+
+ggplot(data=data, aes(x="", y=as.numeric(AmountWeek), fill="")) +
+    geom_boxplot(fill="#69b3a2", outlier.colour="red", outlier.shape=8, outlier.size=4) +
+    theme_ipsum() +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=15)
+      ) +
+    ggtitle("Weekly coffee consumption") +
+    theme(plot.title = element_text(hjust = 0.5)) +
+    xlab("")+
+    ylab("Quantity")
+
+ggplot(data=data, aes(x=AmountOutMonth, y="", fill="")) +
+    geom_boxplot(fill=fill, outlier.colour="red", outlier.shape=8, outlier.size=4) +
+    theme_ipsum() +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=15)
+      ) +
+    ggtitle("Monthly out of house coffee consumption") +
+    theme(plot.title = element_text(hjust = 0.5)) +
+    xlab("")+
+    ylab("Quantity")
+
+ggplot(data=data, aes(x=MoneyCoffee, y="", fill="")) +
+    geom_boxplot(fill=fill, outlier.colour="red", outlier.shape=8, outlier.size=4) +
+    theme_ipsum() +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=15)
+      ) +
+    ggtitle("Amount of money spend on coffee") +
+    theme(plot.title = element_text(hjust = 0.5)) +
+    xlab("")+
+    ylab("Quantity")
+
+```
+
+```{r}
+ggplot(data=data, aes(x=MoneyGroceries, y="", fill="")) +
+    geom_boxplot(fill="#69b3a2", outlier.colour="red", outlier.shape=8, outlier.size=4) +
+    theme_ipsum() +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=15)
+      ) +
+    ggtitle("Amount spend on Groceries") +
+    theme(plot.title = element_text(hjust = 0.5)) +
+    xlab("")+
+    ylab("Quantity")
+
+ggplot(data=data, aes(x=Subscription_Likely, y="", fill="")) +
+    geom_boxplot(fill="#69b3a2", outlier.colour="red", outlier.shape=8, outlier.size=4) +
+    theme_ipsum() +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=15)
+      ) +
+    ggtitle("How likely are you to set up an subscription") +
+    theme(plot.title = element_text(hjust = 0.5)) +
+    xlab("")+
+    ylab("Quantity")
+
+ggplot(data=data, aes(x=App_Likely, y="", fill="")) +
+    geom_boxplot(fill="#69b3a2", outlier.colour="red", outlier.shape=8, outlier.size=4) +
+    theme_ipsum() +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=15)
+      ) +
+    ggtitle("How likely are you to value and use an app?") +
+    theme(plot.title = element_text(hjust = 0.5)) +
+    xlab("")+
+    ylab("Quantity")
+
+ggplot(data=data, aes(x=KnowledgeCoffee, y="", fill="")) +
+    geom_boxplot(fill="#69b3a2", outlier.colour="red", outlier.shape=8, outlier.size=4) +
+    theme_ipsum() +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=15)
+      ) +
+    ggtitle("Level of coffee knowledge") +
+    theme(plot.title = element_text(hjust = 0.5)) +
+    xlab("")+
+    ylab("Quantity")
+```
 
