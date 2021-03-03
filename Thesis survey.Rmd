@@ -26,9 +26,7 @@ htmltools::img(
 data <- read_excel("Main doc survey.xlsx")
 attach(data)
 
-pal9 <- c("#35816F", "#69b3a2", "#555A5B", "#9B9B9B", "#45DAD7", "3C9FAA", "#084033", "#084033", "#084033", "#084033", "#084033")
-
-dani <- c("#ffa500", "#0086b", "#ee5c42", "#ffd561", "#47ce8e", "#5c3170", "#990000")
+dani <- c( "#ffa500", "#DAF7A6", "#ee5c42", "#69b3a2", "#ffd561", "#47ce8e", "#5c3170", "#990000", "#C70039", "#34495E", "#909497")
 
 pal9 <- jcolors("pal9")
 ```
@@ -61,12 +59,12 @@ my_table(freqtable)
 ```
 
 ```{r, echo=FALSE}
-data <- data.frame(
+newdata <- data.frame(
   Age=freqtable$`Age Category`,
   Frequency=freqtable$Absolute
 )
 
-ggplot(data, aes(y = Age, x = Frequency)) + 
+ggplot(newdata, aes(y = Age, x = Frequency)) + 
   geom_bar(stat = "identity", fill="#69b3a2", color="#e9ecef") +
   theme(legend.position="none")
 ```
@@ -84,7 +82,7 @@ blank_theme <- theme_minimal()+
 ggplot(dataB, aes(x="",y = value, fill = group)) +
   geom_bar(width = 1, stat = "identity") +
   coord_polar("y", start = 0) +
-  scale_fill_manual("Age category:", values = pal9)+
+  scale_fill_manual("Age category:", values = dani)+
   blank_theme  +
     theme(axis.text.x=element_blank()) +
   geom_text(aes(x = 1.1, label = value),
@@ -108,12 +106,12 @@ my_table(freqtable)
 ```
 
 ```{r, echo=FALSE}
-data <- data.frame(
+newdata <- data.frame(
   Home=freqtable$`Home`,
   Frequency=freqtable$Absolute
 )
 
-ggplot(data, aes(y = Home, x = Frequency)) + 
+ggplot(newdata, aes(y = Home, x = Frequency)) + 
   geom_bar(stat = "identity", fill="#69b3a2", color="#e9ecef") +
   theme(legend.position="none")
 ```
@@ -131,7 +129,7 @@ blank_theme <- theme_minimal()+
 ggplot(dataB, aes(x="",y = value, fill = group)) +
   geom_bar(width = 1, stat = "identity") +
   coord_polar("y", start = 0) +
-  scale_fill_manual("Home description:", values = pal9)+
+  scale_fill_manual("Home description:", values = dani)+
   blank_theme  +
     theme(axis.text.x=element_blank()) +
   geom_text(aes(x = 1.1, label = value),
@@ -155,12 +153,12 @@ my_table(freqtable)
 ```
 
 ```{r, echo=FALSE}
-data <- data.frame(
+newdata <- data.frame(
   Gender=freqtable$`Gender`,
   Frequency=freqtable$Absolute
 )
 
-ggplot(data, aes(y = Gender, x = Frequency)) + 
+ggplot(newdata, aes(y = Gender, x = Frequency)) + 
   geom_bar(stat = "identity", fill="#69b3a2", color="#e9ecef") +
   theme(legend.position="none")
 ```
@@ -178,7 +176,7 @@ blank_theme <- theme_minimal()+
 ggplot(dataB, aes(x="",y = value, fill = group)) +
   geom_bar(width = 1, stat = "identity") +
   coord_polar("y", start = 0) +
-  scale_fill_manual("Gender:", values = pal9)+
+  scale_fill_manual("Gender:", values = dani)+
   blank_theme  +
     theme(axis.text.x=element_blank()) +
   geom_text(aes(x = 1.1, label = value),
@@ -202,12 +200,12 @@ my_table(freqtable)
 ```
 
 ```{r, echo=FALSE}
-data <- data.frame(
+newdata <- data.frame(
   Education=freqtable$`Education`,
   Frequency=freqtable$Absolute
 )
 
-ggplot(data, aes(y = Education, x = Frequency)) + 
+ggplot(newdata, aes(y = Education, x = Frequency)) + 
   geom_bar(stat = "identity", fill="#69b3a2", color="#e9ecef") +
   theme(legend.position="none")
 ```
@@ -225,7 +223,7 @@ blank_theme <- theme_minimal()+
 ggplot(dataB, aes(x="",y = value, fill = group)) +
   geom_bar(width = 1, stat = "identity") +
   coord_polar("y", start = 0) +
-  scale_fill_manual("Education:", values = pal9)+
+  scale_fill_manual("Education:", values = dani)+
   blank_theme  +
     theme(axis.text.x=element_blank()) +
   geom_text(aes(x = 1.1, label = value),
@@ -249,12 +247,12 @@ my_table(freqtable)
 ```
 
 ```{r, echo=FALSE}
-data <- data.frame(
+newdata <- data.frame(
   Machine=freqtable$`Machine`,
   Frequency=freqtable$Absolute
 )
 
-ggplot(data, aes(y = Machine, x = Frequency)) + 
+ggplot(newdata, aes(y = Machine, x = Frequency)) + 
   geom_bar(stat = "identity", fill="#69b3a2", color="#e9ecef") +
   theme(legend.position="none")
 ```
@@ -269,10 +267,11 @@ blank_theme <- theme_minimal()+
     theme(
         plot.title = element_text(size = 20, face = "bold")
     )
+
 ggplot(dataB, aes(x="",y = value, fill = group)) +
   geom_bar(width = 1, stat = "identity") +
   coord_polar("y", start = 0) +
-  scale_fill_manual("Machine:", values = pal9)+
+  scale_fill_manual("Machine:", values = dani)+
   blank_theme  +
     theme(axis.text.x=element_blank()) +
   geom_text(aes(x = 1.1, label = value),
@@ -284,14 +283,230 @@ ggplot(dataB, aes(x="",y = value, fill = group)) +
          )
 ```
 
+#### Brand choose
+
+```{r, echo=FALSE}
+Absolute <- data.table(Frequency = table(BrandChange))
+Relative <- percent(prop.table(Absolute$Frequency.N))
+freqtable <- cbind(Absolute, Relative)
+colnames(freqtable) <- c("Brand choice", "Absolute", "Relative")
+
+my_table(freqtable)
+```
+
+```{r, echo=FALSE}
+newdata <- data.frame(
+  Brandchange=freqtable$`Brand choice`,
+  Frequency=freqtable$Absolute
+)
+
+ggplot(newdata, aes(y = Brandchange, x = Frequency)) + 
+  geom_bar(stat = "identity", fill="#69b3a2", color="#e9ecef") +
+  theme(legend.position="none")
+```
+
+```{r, echo=FALSE}
+dataB <- data.frame(
+  group=freqtable$`Brand choice`,
+  value=freqtable$Relative
+)
+
+blank_theme <- theme_minimal()+
+    theme(
+        plot.title = element_text(size = 20, face = "bold")
+    )
+
+ggplot(dataB, aes(x="",y = value, fill = group)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start = 0) +
+  scale_fill_manual("Brand chouce:", values = dani)+
+  blank_theme  +
+    theme(axis.text.x=element_blank()) +
+  geom_text(aes(x = 1.1, label = value),
+              position = position_stack(vjust = 0.5),
+              size = 3) +
+  labs(title = "",
+         x = "",
+         y = ""
+         )
+```
+
+#### Purchase Method
+
+```{r, echo=FALSE}
+Absolute <- data.table(Frequency = table(PurchaseLocation))
+Relative <- percent(prop.table(Absolute$Frequency.N))
+freqtable <- cbind(Absolute, Relative)
+colnames(freqtable) <- c("Purchase Method", "Absolute", "Relative")
+
+my_table(freqtable)
+```
+
+```{r, echo=FALSE}
+newdata <- data.frame(
+  PurchaseLocation=freqtable$`Purchase Method`,
+  Frequency=freqtable$Absolute
+)
+
+ggplot(newdata, aes(y = PurchaseLocation, x = Frequency)) + 
+  geom_bar(stat = "identity", fill="#69b3a2", color="#e9ecef") +
+  theme(legend.position="none")
+```
+
+```{r, echo=FALSE}
+dataB <- data.frame(
+  group=freqtable$`Purchase Method`,
+  value=freqtable$Relative
+)
+
+blank_theme <- theme_minimal()+
+    theme(
+        plot.title = element_text(size = 20, face = "bold")
+    )
+
+ggplot(dataB, aes(x="",y = value, fill = group)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start = 0) +
+  scale_fill_manual("Purchase method:", values = dani)+
+  blank_theme  +
+    theme(axis.text.x=element_blank()) +
+  geom_text(aes(x = 1.1, label = value),
+              position = position_stack(vjust = 0.5),
+              size = 3) +
+  labs(title = "",
+         x = "",
+         y = ""
+         )
+```
+
+
 ### Univariate descriptions - Numerical variables
+
+#### Amount coffe consumed weekly
+
+```{r}
+summary(AmountWeek)
+```
+
+
+```{r, echo=FALSE}
+n <- length(AmountWeek)
+
+binwidth <- 2
+ggplot(data = data, aes(AmountWeek) ) + 
+    geom_histogram(binwidth = 2, fill="#69b3a2", color="#e9ecef", alpha=0.9) +    
+    stat_function(fun = function(x) dnorm(x, mean(data$AmountWeek), sd = sd(data$AmountWeek)) * n * binwidth,
+    color = "black", size = 0.6) +
+    ggtitle("How many cups of coffee do you consume per week?") +
+      xlab("Cups of coffee") +
+      ylab("Frequency") +
+ theme(plot.title = element_text(hjust = 0.5, size=11, face="bold"))
+```
+
+#### Amount per month out of house
+
+```{r}
+summary(AmountOutMonth)
+```
+
+```{r, echo=FALSE}
+n <- length(AmountOutMonth)
+
+binwidth <- 2
+ggplot(data = data, aes(AmountOutMonth) ) + 
+    geom_histogram(binwidth = 2, fill="#69b3a2", color="#e9ecef", alpha=0.9) +    
+    stat_function(fun = function(x) dnorm(x, mean(data$AmountOutMonth), sd = sd(data$AmountOutMonth)) * n * binwidth,
+    color = "black", size = 0.6) +
+    ggtitle("How many cups of coffee do you consume out of house per month?") +
+      xlab("Cups of coffee") +
+      ylab("Frequency") +
+ theme(plot.title = element_text(hjust = 0.5, size=11, face="bold"))
+```
+
+#### Money coffee
+
+```{r}
+summary(MoneyCoffee)
+```
+
+```{r, echo=FALSE}
+n <- length(MoneyCoffee)
+
+binwidth <- 4
+ggplot(data = data, aes(MoneyCoffee) ) + 
+    geom_histogram(binwidth = 4, fill="#69b3a2", color="#e9ecef", alpha=0.9) +    
+    stat_function(fun = function(x) dnorm(x, mean(data$MoneyCoffee), sd = sd(data$MoneyCoffee)) * n * binwidth,
+    color = "black", size = 0.6) +
+    ggtitle("How much money do you spend on average on coffee?") +
+      xlab("Amount in Euros") +
+      ylab("Frequency") +
+ theme(plot.title = element_text(hjust = 0.5, size=11, face="bold"))
+```
+
+#### Money groceries
+
+```{r}
+summary(MoneyGroceries)
+```
+
+```{r, echo=FALSE}
+n <- length(MoneyGroceries)
+
+binwidth <- 20
+ggplot(data = data, aes(MoneyGroceries) ) + 
+    geom_histogram(binwidth = 20, fill="#69b3a2", color="#e9ecef", alpha=0.9) +    
+    stat_function(fun = function(x) dnorm(x, mean(data$MoneyGroceries), sd = sd(data$MoneyGroceries)) * n * binwidth,
+    color = "black", size = 0.6) +
+    ggtitle("How much money do you spend on average on groceries?") +
+      xlab("Amount in Euros") +
+      ylab("Frequency") +
+ theme(plot.title = element_text(hjust = 0.5, size=11, face="bold"))
+```
+
+
+#### Subscription likely
+
+```{r}
+summary(Subscription_Likely)
+```
+
+```{r, echo=FALSE}
+n <- length(Subscription_Likely)
+
+binwidth <- 1
+ggplot(data = data, aes(Subscription_Likely) ) + 
+    geom_histogram(binwidth = 1, fill="#69b3a2", color="#e9ecef", alpha=0.9) +    
+    ggtitle("How likely are you to set up an subscription?") +
+      xlab("Likeliness") +
+      ylab("Frequency") +
+ theme(plot.title = element_text(hjust = 0.5, size=11, face="bold"))
+```
+
+#### App likely
+
+```{r}
+summary(App_Likely)
+```
+
+```{r, echo=FALSE}
+n <- length(App_Likely)
+
+binwidth <- 1
+ggplot(data = data, aes(App_Likely) ) + 
+    geom_histogram(binwidth = 1, fill="#69b3a2", color="#e9ecef", alpha=0.9) +    
+    ggtitle("How likely are you to set up an app?") +
+      xlab("Likeliness") +
+      ylab("Frequency") +
+ theme(plot.title = element_text(hjust = 0.5, size=11, face="bold"))
+```
+
 
 #### Boxplots
 
 ```{r, echo=FALSE}
 AmountWeek <- as.numeric(AmountWeek)
 
-ggplot(data=data, aes(x="", y=as.numeric(AmountWeek), fill="")) +
+box1 <- ggplot(data=data, aes(x=AmountWeek, y="", fill="")) +
     geom_boxplot(fill="#69b3a2", outlier.colour="red", outlier.shape=8, outlier.size=4) +
     theme_ipsum() +
     theme(
@@ -303,8 +518,8 @@ ggplot(data=data, aes(x="", y=as.numeric(AmountWeek), fill="")) +
     xlab("")+
     ylab("Quantity")
 
-ggplot(data=data, aes(x=AmountOutMonth, y="", fill="")) +
-    geom_boxplot(fill=fill, outlier.colour="red", outlier.shape=8, outlier.size=4) +
+box2 <- ggplot(data=data, aes(x=AmountOutMonth, y="", fill="")) +
+    geom_boxplot(fill="#69b3a2", outlier.colour="red", outlier.shape=8, outlier.size=4) +
     theme_ipsum() +
     theme(
       legend.position="none",
@@ -315,8 +530,12 @@ ggplot(data=data, aes(x=AmountOutMonth, y="", fill="")) +
     xlab("")+
     ylab("Quantity")
 
-ggplot(data=data, aes(x=MoneyCoffee, y="", fill="")) +
-    geom_boxplot(fill=fill, outlier.colour="red", outlier.shape=8, outlier.size=4) +
+grid.arrange(box1, box2, nrow=2)
+```
+
+```{r}
+box3 <- ggplot(data=data, aes(x=MoneyCoffee, y="", fill="")) +
+    geom_boxplot(fill="#69b3a2", outlier.colour="red", outlier.shape=8, outlier.size=4) +
     theme_ipsum() +
     theme(
       legend.position="none",
@@ -327,10 +546,8 @@ ggplot(data=data, aes(x=MoneyCoffee, y="", fill="")) +
     xlab("")+
     ylab("Quantity")
 
-```
 
-```{r}
-ggplot(data=data, aes(x=MoneyGroceries, y="", fill="")) +
+box4 <- ggplot(data=data, aes(x=MoneyGroceries, y="", fill="")) +
     geom_boxplot(fill="#69b3a2", outlier.colour="red", outlier.shape=8, outlier.size=4) +
     theme_ipsum() +
     theme(
@@ -342,7 +559,9 @@ ggplot(data=data, aes(x=MoneyGroceries, y="", fill="")) +
     xlab("")+
     ylab("Quantity")
 
-ggplot(data=data, aes(x=Subscription_Likely, y="", fill="")) +
+grid.arrange(box3, box4, nrow=2)
+
+box5 <- ggplot(data=data, aes(x=Subscription_Likely, y="", fill="")) +
     geom_boxplot(fill="#69b3a2", outlier.colour="red", outlier.shape=8, outlier.size=4) +
     theme_ipsum() +
     theme(
@@ -354,7 +573,7 @@ ggplot(data=data, aes(x=Subscription_Likely, y="", fill="")) +
     xlab("")+
     ylab("Quantity")
 
-ggplot(data=data, aes(x=App_Likely, y="", fill="")) +
+box6 <- ggplot(data=data, aes(x=App_Likely, y="", fill="")) +
     geom_boxplot(fill="#69b3a2", outlier.colour="red", outlier.shape=8, outlier.size=4) +
     theme_ipsum() +
     theme(
@@ -366,7 +585,9 @@ ggplot(data=data, aes(x=App_Likely, y="", fill="")) +
     xlab("")+
     ylab("Quantity")
 
-ggplot(data=data, aes(x=KnowledgeCoffee, y="", fill="")) +
+grid.arrange(box5, box6, nrow=2)
+
+box6 <- ggplot(data=data, aes(x=KnowledgeCoffee, y="", fill="")) +
     geom_boxplot(fill="#69b3a2", outlier.colour="red", outlier.shape=8, outlier.size=4) +
     theme_ipsum() +
     theme(

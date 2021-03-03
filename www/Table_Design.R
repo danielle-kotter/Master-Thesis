@@ -11,6 +11,6 @@ my_table = function(data) {
       position = "left",
   ) %>%  
     
-    row_spec(row = 0, bold = T, background = "skyblue", color = "White"
+    row_spec(row = 0, bold = T, background = "#69b3a2", color = "White"
   ) 
 }
