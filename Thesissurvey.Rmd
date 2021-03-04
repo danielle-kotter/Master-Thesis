@@ -61,7 +61,7 @@ pal9 <- jcolors("pal9")
 
 - Regressions
 
-    Data problems
+- Data problems
 
 ### Introduction
 
@@ -758,6 +758,10 @@ box6 <- ggplot(data=data, aes(x=KnowledgeCoffee, y="", fill="")) +
     ylab("Quantity")
 ```
 
+------------------------------------------------------------------------
+
+\newpage
+
 ### Parametric testing
 
 H_0 \<- There is no association between the two variables. \
@@ -818,7 +822,7 @@ chisq.test(KnowledgeCoffee, PurchaseLocation, simulate.p.value = TRUE, B = 500)
 
 ### Relationships
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, out.width="150%"}
 newdata <- data.frame(AmountWeek, AmountOutMonth, MoneyCoffee, MoneyGroceries, KnowledgeCoffee, Subscription_Likely, App_Likely)
 
 pairs.panels(newdata,
