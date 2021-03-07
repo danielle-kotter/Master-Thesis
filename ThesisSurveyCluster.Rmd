@@ -36,6 +36,7 @@ https://towardsdatascience.com/k-means-clustering-algorithm-applications-evaluat
 
 ### One hot encoding
 
+
 ```{r}
 dataf <- dummy_cols(data, select_columns = c("Machine", "BrandChange", "PurchaseLocation", "Education", "AgeCategory", "Frequency_Specialty", "Home", "Occupation", "Gender", "Subscription_Not_Likely", "Criteria_Type_Coffee", "Supermarket_Positive_ Reasons", "Supermarket_Negative_ Reasons", "Language"), remove_selected_columns = TRUE, ignore_na = TRUE)
 ```
@@ -43,7 +44,63 @@ dataf <- dummy_cols(data, select_columns = c("Machine", "BrandChange", "Purchase
 ```{r}
 # Prepare Data
 mydata <- na.omit(dataf) # listwise deletion of missing
-mydata <- scale(dataf) # standardize variables
+mydata <- scale(dataf[,c(2:6, 7:13)]) # standardize variables
+mydata <- cbind(mydata, dataf[,c(14:50)]) 
+```
+
+
+```{r}
+set.seed(123)
+
+# K-Means Cluster Analysis
+fit <- kmeans(na.omit(mydata), 3, nstart = 25) #3 cluster solution
+# get cluster means
+aggregate(na.omit(mydata),by=list(fit$cluster),FUN=mean)
+# append cluster assignment
+mydata <- data.frame(na.omit(mydata), fit$cluster)
+```
+
+```{r}
+fviz_cluster(fit, geom = "point", data = mydata, outlier.color = "black", palette = dani) +
+  ggtitle("k = 3")
+```
+
+```{r}
+mydata <- na.omit(mydata)
+
+distance <- get_dist(mydata)
+graph <- fviz_dist(distance, gradient = list(low = "#00AFBB", mid = "white", high = "#FC4E07"))
+
+set.seed(224)
+
+fviz_nbclust(mydata, kmeans, method = "wss")
+
+sil <- silhouette(fit$cluster, dist(mydata))
+fviz_silhouette(sil)
+```
+
+
+\newpage
+
+```{r}
+Results <- as.data.table(aggregate(na.omit(mydata[,19:25]), by=list(cluster=fit$cluster), mean), by = round)
+
+Results_Round <- round(Results)
+my_table(Results_Round)
+```
+
+```{r}
+Results <- as.data.table(aggregate(na.omit(mydata[,6:9]), by=list(cluster=fit$cluster), mean), by = round)
+
+Results_Round <- round(Results)
+my_table(Results_Round)
+```
+
+```{r}
+Results <- as.data.table(aggregate(na.omit(mydata[,35:40]), by=list(cluster=fit$cluster), mean), by = round)
+
+Results_Round <- round(Results)
+my_table(Results_Round)
 ```
 
 
@@ -108,11 +165,26 @@ sil <- silhouette(fit$cluster, dist(mydata))
 fviz_silhouette(sil)
 ```
 
-```{r}
-Results <- as.data.table(aggregate(na.omit(NumMydata), by=list(cluster=fit$cluster), mean), by = round)
+\newpage
 
-Results_Round <- round(Results, 1)
+```{r}
+Results <- as.data.table(aggregate(na.omit(NumMydata[,1:5]), by=list(cluster=fit$cluster), mean), by = round)
+
+Results_Round <- round(Results)
 my_table(Results_Round)
 ```
 
+```{r}
+Results <- as.data.table(aggregate(na.omit(NumMydata[,6:9]), by=list(cluster=fit$cluster), mean), by = round)
+
+Results_Round <- round(Results)
+my_table(Results_Round)
+```
+
+```{r}
+Results <- as.data.table(aggregate(na.omit(NumMydata[,10:12]), by=list(cluster=fit$cluster), mean), by = round)
+
+Results_Round <- round(Results)
+my_table(Results_Round)
+```
 
