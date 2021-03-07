@@ -26,7 +26,7 @@ htmltools::img(
 data <- read_excel("Main doc survey.xlsx")
 attach(data)
 
-dani <- c( "#ffa500", "#DAF7A6", "#34495E", "#69b3a2", "#ffd561", "#ee5c42", "#5c3170", "#990000", "#C70039", "#34495E", "#909497")
+dani <- c( "#ffa500", "#DAF7A6", "#34495E", "#69b3a2", "#ffd561", "#ee5c42", "#C8A2C8", "#5c3170", "#990000", "#C70039", "#34495E", "#909497")
 
 pal9 <- jcolors("pal9")
 ```
@@ -272,6 +272,20 @@ Relative <- percent(prop.table(Absolute$Frequency.N))
 freqtable <- cbind(Absolute, Relative)
 colnames(freqtable) <- c("Education", "Absolute", "Relative")
 
+freqtable[,`Education`:= factor(
+ `Education`, 
+  levels = c(
+    "Elementary school", 
+    "High school", 
+    "Associate degree",
+    "Bachelor's degree", 
+    "Master",
+    "Phd"
+  )
+)]
+
+setorder(freqtable, `Education`)
+
 my_table(freqtable)
 ```
 
@@ -352,9 +366,6 @@ ggplot(dataB, aes(x="",y = value, fill = group)) +
   blank_theme  +
     theme(axis.text.x=element_blank(), 
           legend.title = element_text(face = "bold")) +
-  geom_text(aes(x = 1.1, label = value),
-              position = position_stack(vjust = 0.5),
-              size = 3) +
   labs(title = "",
          x = "",
          y = ""
@@ -368,6 +379,18 @@ Absolute <- data.table(Frequency = table(BrandChange))
 Relative <- percent(prop.table(Absolute$Frequency.N))
 freqtable <- cbind(Absolute, Relative)
 colnames(freqtable) <- c("Brand choice", "Absolute", "Relative")
+
+freqtable[,`Brand choice`:= factor(
+ `Brand choice`, 
+  levels = c(
+    "Never",
+    "Sometimes",
+    "Very often",
+    "Every time"
+  )
+)]
+
+setorder(freqtable, `Brand choice`)
 
 my_table(freqtable)
 ```
@@ -459,6 +482,88 @@ ggplot(dataB, aes(x="",y = value, fill = group)) +
          )
 ```
 
+### Multiple option answers:
+
+#### Reasons buying from the supermarket
+
+```{r}
+# Reasons for buying from the supermarket
+dt <- data.table(data)
+dt[,id:=.I]
+
+dt[
+  ,
+  (sprintf("super_market_pos_%i", c(1,2))):=tstrsplit(`Supermarket_Positive_ Reasons`,",")
+][,`Supermarket_Positive_ Reasons`:=NULL]
+
+dt_l <- na.omit(melt(dt, id.vars = "id", measure.vars = c("super_market_pos_1","super_market_pos_2")))
+
+NSupermarket_Positive_Reasons <- dt_l[,table(value)]
+my_table(NSupermarket_Positive_Reasons)
+```
+
+
+#### Reasons for not buying from the supermarket
+
+```{r}
+dt <- data.table(data)
+dt[,id:=.I]
+
+# Reasons for NOT buying from the supermarket
+
+dt[
+  ,
+  (sprintf("super_market_neg_%i", c(1,2))):=tstrsplit(`Supermarket_Negative_ Reasons`,",")
+][,`Supermarket_Negative_ Reasons`:=NULL]
+
+dt_l <- na.omit(melt(dt, id.vars = "id", measure.vars = c("super_market_neg_1","super_market_neg_2")))
+
+NSupermarket_Negative_Reasons <- dt_l[,table(value)]
+NewTable<- as.data.table(NSupermarket_Negative_Reasons)
+colnames(NewTable) <- c("Reason", "Frequency")
+my_table(NewTable)
+```
+
+```{r, echo=FALSE}
+Absolute <- data.table(Frequency = table(`Supermarket_Negative_ Reasons`))
+Relative <- percent(prop.table(Absolute$Frequency.N))
+freqtable <- cbind(Absolute, Relative)
+colnames(freqtable) <- c("Negative reasons", "Absolute", "Relative")
+
+my_table(freqtable)
+```
+
+```{r, echo=FALSE}
+newdata <- data.frame(
+  Negativereasons=freqtable$`Negative reasons`,
+  Frequency=freqtable$Absolute
+)
+
+ggplot(newdata, aes(y = Negativereasons, x = Frequency)) + 
+  geom_bar(stat = "identity", fill="#69b3a2", color="#e9ecef") +
+  theme(legend.position="none")
+```
+
+#### Criteria for choosing the type of coffee
+
+```{r}
+dt <- data.table(data)
+dt[,id:=.I]
+
+# Criterias for choosing the type of coffee
+
+dt[
+  ,
+  (sprintf("Criteria_type_%i", c(1,2))):=tstrsplit(Criteria_Type_Coffee,",")
+][,`Criteria_Type_Coffee`:=NULL]
+
+dt_l <- na.omit(melt(dt, id.vars = "id", measure.vars = c("Criteria_type_1","Criteria_type_2")))
+
+NCriteria_Type_Coffee <- dt_l[,table(value)]
+my_table(NCriteria_Type_Coffee)
+```
+
+
 #### Purchase decisions 1-5
 
 ##### Price
@@ -466,27 +571,27 @@ ggplot(dataB, aes(x="",y = value, fill = group)) +
 ```{r, echo=FALSE}
 Absolute <- data.table(Frequency = table(Purchase_Price))
 Relative <- percent(prop.table(Absolute$Frequency.N))
-freqtable <- cbind(Absolute, Relative)
-colnames(freqtable) <- c("Purchase decision Price", "Absolute", "Relative")
+freqtable1 <- cbind(Absolute, Relative)
+colnames(freqtable1) <- c("Purchase decision - price", "Absolute", "Relative")
 
-my_table(freqtable)
+my_table(freqtable1)
 ```
 
 ```{r, echo=FALSE}
 newdata <- data.frame(
-  PurchasePrice=freqtable$`Purchase decision Price`,
-  Frequency=freqtable$Absolute
+  PurchasePrice=freqtable1$`Purchase decision - price`,
+  Frequency=freqtable1$Absolute
 )
 
-ggplot(newdata, aes(y = PurchasePrice, x = Frequency)) + 
+ggplot(newdata, aes(y = Frequency, x = PurchasePrice)) + 
   geom_bar(stat = "identity", fill="#69b3a2", color="#e9ecef") +
   theme(legend.position="none")
 ```
 
 ```{r, echo=FALSE}
 dataB <- data.frame(
-  group=freqtable$`Purchase decision Price`,
-  value=freqtable$Relative
+  group=freqtable1$`Purchase decision - price`,
+  value=freqtable1$Relative
 )
 
 blank_theme <- theme_minimal()+
@@ -504,33 +609,319 @@ ggplot(dataB, aes(x="",y = value, fill = group)) +
   geom_text(aes(x = 1.1, label = value),
               position = position_stack(vjust = 0.5),
               size = 3) +
-  labs(title = "",
+  labs(title = "Price",
          x = "",
          y = ""
          )
 ```
 
-```{r}
-# library
-library(ggplot2)
-library(viridis)
-library(hrbrthemes)
+##### Sustainability
 
-# create a dataset
-specie <- c(rep("sorgho" , 3) , rep("poacee" , 3) , rep("banana" , 3) , rep("triticum" , 3) )
-condition <- rep(c("normal" , "stress" , "Nitrogen") , 4)
-value <- abs(rnorm(12 , 0 , 15))
-dataN <- data.frame(specie,condition,value)
+```{r, echo=FALSE}
+Absolute <- data.table(Frequency = table(Purchase_Sustainability))
+Relative <- percent(prop.table(Absolute$Frequency.N))
+freqtable2 <- cbind(Absolute, Relative)
+colnames(freqtable2) <- c("Purchase decision - sustainability", "Absolute", "Relative")
+
+my_table(freqtable2)
+```
+
+```{r, echo=FALSE}
+newdata <- data.frame(
+  PurchaseSustainability=freqtable2$`Purchase decision - sustainability`,
+  Frequency=freqtable2$Absolute
+)
+
+ggplot(newdata, aes(y = PurchaseSustainability, x = Frequency)) + 
+  geom_bar(stat = "identity", fill="#69b3a2", color="#e9ecef") +
+  theme(legend.position="none")
+```
+
+```{r, echo=FALSE}
+dataB <- data.frame(
+  group=freqtable2$`Purchase decision - sustainability`,
+  value=freqtable2$Relative
+)
+
+blank_theme <- theme_minimal()+
+    theme(
+        plot.title = element_text(size = 20, face = "bold")
+    )
+
+ggplot(dataB, aes(x="",y = value, fill = group)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start = 0) +
+  scale_fill_manual("Decision:", values = dani)+
+  blank_theme  +
+    theme(axis.text.x=element_blank(), 
+          legend.title = element_text(face = "bold")) +
+  geom_text(aes(x = 1.1, label = value),
+              position = position_stack(vjust = 0.5),
+              size = 3) +
+  labs(title = "Sustainability",
+         x = "",
+         y = ""
+         )
+```
+
+##### Certificates
+
+```{r, echo=FALSE}
+Absolute <- data.table(Frequency = table(Purchase_Certificate))
+Relative <- percent(prop.table(Absolute$Frequency.N))
+freqtable3 <- cbind(Absolute, Relative)
+colnames(freqtable3) <- c("Purchase decision - certificate", "Absolute", "Relative")
+
+my_table(freqtable3)
+```
+
+```{r, echo=FALSE}
+newdata <- data.frame(
+  PurchaseCertificate=freqtable3$`Purchase decision - certificate`,
+  Frequency=freqtable3$Absolute
+)
+
+ggplot(newdata, aes(y = PurchaseCertificate, x = Frequency)) + 
+  geom_bar(stat = "identity", fill="#69b3a2", color="#e9ecef") +
+  theme(legend.position="none")
+```
+
+```{r, echo=FALSE}
+dataB <- data.frame(
+  group=freqtable3$`Purchase decision - certificate`,
+  value=freqtable3$Relative
+)
+
+blank_theme <- theme_minimal()+
+    theme(
+        plot.title = element_text(size = 20, face = "bold")
+    )
+
+ggplot(dataB, aes(x="",y = value, fill = group)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start = 0) +
+  scale_fill_manual("Decision:", values = dani)+
+  blank_theme  +
+    theme(axis.text.x=element_blank(), 
+          legend.title = element_text(face = "bold")) +
+  geom_text(aes(x = 1.1, label = value),
+              position = position_stack(vjust = 0.5),
+              size = 3) +
+  labs(title = "Certificate",
+         x = "",
+         y = ""
+         )
+```
+
+##### Fairtrade
+
+```{r, echo=FALSE}
+Absolute4 <- data.table(Frequency = table(Purchase_Fairtrade))
+Relative <- percent(prop.table(Absolute4$Frequency.N))
+freqtable4 <- cbind(Absolute4, Relative)
+colnames(freqtable4) <- c("Purchase decision - fairtrade", "Absolute", "Relative")
+
+my_table(freqtable4)
+```
+
+```{r, echo=FALSE}
+newdata <- data.frame(
+  PurchaseFairtrade=freqtable4$`Purchase decision - fairtrade`,
+  Frequency=freqtable4$Absolute
+)
+
+ggplot(newdata, aes(y = PurchaseFairtrade, x = Frequency)) + 
+  geom_bar(stat = "identity", fill="#69b3a2", color="#e9ecef") +
+  theme(legend.position="none")
+```
+
+```{r, echo=FALSE}
+dataB <- data.frame(
+  group=freqtable4$`Purchase decision - fairtrade`,
+  value=freqtable4$Relative
+)
+
+blank_theme <- theme_minimal()+
+    theme(
+        plot.title = element_text(size = 20, face = "bold")
+    )
+
+ggplot(dataB, aes(x="",y = value, fill = group)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start = 0) +
+  scale_fill_manual("Decision:", values = dani)+
+  blank_theme  +
+    theme(axis.text.x=element_blank(), 
+          legend.title = element_text(face = "bold")) +
+  geom_text(aes(x = 1.1, label = value),
+              position = position_stack(vjust = 0.5),
+              size = 3) +
+  labs(title = "Fair trade",
+         x = "",
+         y = ""
+         )
+```
+
+##### Packaging
+
+```{r, echo=FALSE}
+Absolute5 <- data.table(Frequency = table(Purchase_Packaging))
+Relative <- percent(prop.table(Absolute5$Frequency.N))
+freqtable5 <- cbind(Absolute5, Relative)
+colnames(freqtable5) <- c("Purchase decision - packaging", "Absolute", "Relative")
+
+my_table(freqtable5)
+```
+
+```{r, echo=FALSE}
+newdata <- data.frame(
+  PurchasePackaging=freqtable5$`Purchase decision - packaging`,
+  Frequency=freqtable5$Absolute
+)
+
+ggplot(newdata, aes(y = PurchasePackaging, x = Frequency)) + 
+  geom_bar(stat = "identity", fill="#69b3a2", color="#e9ecef") +
+  theme(legend.position="none")
+```
+
+```{r, echo=FALSE}
+dataB <- data.frame(
+  group=freqtable5$`Purchase decision - packaging`,
+  value=freqtable5$Relative
+)
+
+blank_theme <- theme_minimal()+
+    theme(
+        plot.title = element_text(size = 20, face = "bold")
+    )
+
+ggplot(dataB, aes(x="",y = value, fill = group)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start = 0) +
+  scale_fill_manual("Decision:", values = dani)+
+  blank_theme  +
+    theme(axis.text.x=element_blank(), 
+          legend.title = element_text(face = "bold")) +
+  geom_text(aes(x = 1.1, label = value),
+              position = position_stack(vjust = 0.5),
+              size = 3) +
+  labs(title = "Packaging",
+         x = "",
+         y = ""
+         )
+```
+
+### Combined data
+
+```{r}
+Combined_data <- as.data.frame(cbind(Absolute, freqtable1[,Absolute], freqtable2[,Absolute], freqtable3[,Absolute], freqtable4[,Absolute]))
+colnames(Combined_data) <- c("Importance", "Price", "Sustainability", "Certificates", "Fairtrade", "Packaging")
+my_table(Combined_data)
+```
+
+```{r}
+Combined_data %>%
+  gather(key, value, -Importance) %>% 
+  ggplot(aes(x=Importance, y=value, fill = key)) +
+   scale_fill_manual("Purchase decision:", values = dani)+
+    geom_col(position = "dodge") +
+      ylab("Frequency") +
+      xlab("Importance")
+```
+
+
+```{r}
+# creating a dataset
+Factor <- c(rep("Price", 5), rep("Sustainability", 5), rep("Certificates", 5), rep("Fairtrade", 5),  rep("Packaging",5))
+
+condition <- rep(Combined_data$Importance,5)
+value <- c(freqtable1[,Absolute], freqtable2[,Absolute], freqtable3[,Absolute], freqtable4[,Absolute], freqtable5[,Absolute])
+dataN <- data.frame(Factor,condition,value)
  
-# Graph
+# Plotting the graph
 ggplot(dataN, aes(fill=condition, y=value, x=condition)) + 
     geom_bar(position="dodge", stat="identity") +
-    scale_fill_viridis(discrete = T, option = "E") +
-    ggtitle("Studying 4 species..") +
-    facet_wrap(~specie) +
+    ggtitle("Importance of several factors on the purchasing decision.") +
+    scale_fill_manual(values = dani)+
+    facet_wrap(~Factor) +
     theme_ipsum() +
-    theme(legend.position="none") +
-    xlab("")
+    theme(legend.position="none",plot.title = element_text(size=16, face="bold")) +
+    xlab("1: Not important at all, 5: Extremely important") +
+    ylab("Frequency")
+```
+
+
+#### Frequency specialty coffee consumption
+
+```{r, echo=FALSE}
+Absolute <- data.table(Frequency = table(Frequency_Specialty))
+Relative <- percent(prop.table(Absolute$Frequency.N))
+freqtable <- cbind(Absolute, Relative)
+colnames(freqtable) <- c("Frequency coffee consumption", "Absolute", "Relative")
+
+freqtable[,`Frequency coffee consumption`:= factor(
+ `Frequency coffee consumption`, 
+  levels = c(
+    "I do (did) not know what this is", 
+    "Never", 
+    "Only in cafes", 
+    "Sometimes",
+    "Always"
+  )
+)]
+
+setorder(freqtable, `Frequency coffee consumption`)
+
+my_table(freqtable)
+```
+
+```{r, echo=FALSE}
+newdata <- data.frame(
+  FrequencyConsumption=freqtable$`Frequency coffee consumption`,
+  Frequency=freqtable$Absolute
+)
+
+ggplot(newdata, aes(y = FrequencyConsumption, x = Frequency)) + 
+  geom_bar(stat = "identity", fill="#69b3a2", color="#e9ecef") +
+  theme(legend.position="none")
+```
+
+#### Reasons for not being likely to set up a subscription
+
+```{r}
+dt <- data.table(data)
+dt[,id:=.I]
+
+# Reasons for not being likely to setup a subscription
+dt[
+  ,
+  (sprintf("Subscription_Not_Likely_%i", c(1,2))):=tstrsplit(Subscription_Not_Likely,",")
+][,Subscription_Not_Likely:=NULL]
+
+dt_l <- na.omit(melt(dt, id.vars = "id", measure.vars = c("Subscription_Not_Likely_1","Subscription_Not_Likely_2")))
+
+NSubscription_Not_Likely <- dt_l[,table(value)]
+my_table(NSubscription_Not_Likely)
+```
+
+```{r, echo=FALSE}
+Absolute <- data.table(Frequency = table(Subscription_Not_Likely))
+Relative <- percent(prop.table(Absolute$Frequency.N))
+freqtable <- cbind(Absolute, Relative)
+colnames(freqtable) <- c("Reasons", "Absolute", "Relative")
+
+my_table(freqtable)
+```
+
+```{r, echo=FALSE}
+newdata <- data.frame(
+  Reasons=freqtable$Reasons,
+  Frequency=freqtable$Absolute
+)
+
+ggplot(newdata, aes(y = Reasons, x = Frequency)) + 
+  geom_bar(stat = "identity", fill="#69b3a2", color="#e9ecef") +
+  theme(legend.position="none")
 ```
 
 ------------------------------------------------------------------------
@@ -822,8 +1213,8 @@ chisq.test(KnowledgeCoffee, PurchaseLocation, simulate.p.value = TRUE, B = 500)
 
 ### Relationships
 
-```{r, echo=FALSE, out.width="150%"}
-newdata <- data.frame(AmountWeek, AmountOutMonth, MoneyCoffee, MoneyGroceries, KnowledgeCoffee, Subscription_Likely, App_Likely)
+```{r, echo=FALSE, out.width="110%"}
+newdata <- data.frame(AmountWeek, AmountOutMonth, MoneyCoffee, MoneyGroceries, KnowledgeCoffee, Subscription_Likely, Machine)
 
 pairs.panels(newdata,
 method = "pearson",
@@ -878,6 +1269,11 @@ ggplot(data = data, aes(x= AmountWeek, fill=AgeCategory)) + geom_density(alpha=.
 \newpage
 
 ### Regressions
+
+```{r}
+summary(lm(Subscription_Likely~KnowledgeCoffee))
+```
+
 
 Incl categorical variables as dummies
 
