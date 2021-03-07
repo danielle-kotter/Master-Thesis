@@ -35,7 +35,11 @@ packages = c(
   "gtable",
   "lavaan",
   "sem",
-  "jcolors"
+  "jcolors",
+  "cluster",
+  "mltools",
+  "factoextra",
+  "fastDummies"
 )
 
 invisible(

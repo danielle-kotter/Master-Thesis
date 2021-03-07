@@ -1255,13 +1255,36 @@ ggplot(data = data, aes(x= AmountWeek, fill=AgeCategory)) + geom_density(alpha=.
 
       ) +
 
-    ggtitle("Coffee consumption by gender") +
+    ggtitle("Coffee consumption by Age") +
 
     theme(plot.title = element_text(hjust = 0.5, face= "bold")) +
 
     xlab("")+
 
     ylab("Density")
+```
+
+
+```{r}
+ ggplot(data, aes(y = AmountWeek, x = MoneyCoffee)) +
+  geom_point(size=1) +
+  geom_smooth(method="lm", fill = NA, color="#69b3a2", fullrange=TRUE, formula = y ~ x) +
+   theme(plot.title = element_text(hjust = 0.5)) +
+        labs(title = "Amount of coffee consumer by the amount of money spend",
+         y = "Coffee cups consumer per week",
+         x = "Amount spend on coffee per month"
+         )
+```
+
+```{r}
+ ggplot(data, aes(y = AmountWeek, x = MoneyGroceries)) +
+  geom_point(size=1) +
+  geom_smooth(method="lm", fill = NA, color="#69b3a2", fullrange=TRUE, formula = y ~ x) +
+   theme(plot.title = element_text(hjust = 0.5)) +
+        labs(title = "Amount of coffee consumer by the amount of money spend on groceries",
+         y = "Coffee cups consumer per week",
+         x = "Amount spend on groceries per month"
+         )
 ```
 
 ------------------------------------------------------------------------
@@ -1273,7 +1296,6 @@ ggplot(data = data, aes(x= AmountWeek, fill=AgeCategory)) + geom_density(alpha=.
 ```{r}
 summary(lm(Subscription_Likely~KnowledgeCoffee))
 ```
-
 
 Incl categorical variables as dummies
 
