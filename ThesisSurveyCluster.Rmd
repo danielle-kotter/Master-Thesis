@@ -31,102 +31,165 @@ dani <- c( "#ffa500", "#34495E", "#69b3a2", "#ffd561", "#ee5c42", "#DAF7A6", "#C
 pal9 <- jcolors("pal9")
 ```
 
-https://towardsdatascience.com/k-means-clustering-algorithm-applications-evaluation-methods-and-drawbacks-aa03e644b48a 
+[Reference to Methodology applied.](https://towardsdatascience.com/k-means-clustering-algorithm-applications-evaluation-methods-and-drawbacks-aa03e644b48a "Reference to Methodology applied."){.uri}
 
+### One-hot encoding
 
-### One hot encoding
+Primarily several multi-option variables are removed from the dataset. Next dummies are created for the categorical variables.
 
+*If the option is not selected, the answer corresponds with 0. \
+If the option has been selected, the answer corresponds with 1.*
 
 ```{r}
-dataf <- dummy_cols(data, select_columns = c("Machine", "BrandChange", "PurchaseLocation", "Education", "AgeCategory", "Frequency_Specialty", "Home", "Occupation", "Gender", "Subscription_Not_Likely", "Criteria_Type_Coffee", "Supermarket_Positive_ Reasons", "Supermarket_Negative_ Reasons", "Language"), remove_selected_columns = TRUE, ignore_na = TRUE)
+data <- data[,-match(c("Criteria_Type_Coffee", "Subscription_Not_Likely", "Supermarket_Negative_ Reasons", "Supermarket_Positive_ Reasons", "Language", "Participant"),names(data))]
+
+dataf <- dummy_cols(data, select_columns = c("Machine", "BrandChange", "PurchaseLocation", "Education", "AgeCategory", "Frequency_Specialty", "Home", "Occupation", "Gender"), remove_selected_columns = TRUE, ignore_na = TRUE)
 ```
+
+## Clustering including categorical variables
+
+The next step is to remove this missing variables (NA), standardize the numerical variables and combine to make the new data table to be used for the cluster analysis.
 
 ```{r}
 # Prepare Data
-mydata <- na.omit(dataf) # listwise deletion of missing
-mydata <- scale(dataf[,c(2:6, 7:13)]) # standardize variables
-mydata <- cbind(mydata, dataf[,c(14:50)]) 
+Orgdata <- na.omit(dataf) # listwise deletion of missing
+stdata <- scale(Orgdata[,c(1:12)]) # standardize variables
+NewData <- cbind(stdata, Orgdata[,c(13:50)])
 ```
 
+Based on the graph below, I have decided to use 4 numbers of cluster.
 
 ```{r}
-set.seed(123)
+NewData <- na.omit(NewData)
 
-# K-Means Cluster Analysis
-fit <- kmeans(na.omit(mydata), 3, nstart = 25) #3 cluster solution
-# get cluster means
-aggregate(na.omit(mydata),by=list(fit$cluster),FUN=mean)
-# append cluster assignment
-mydata <- data.frame(na.omit(mydata), fit$cluster)
-```
-
-```{r}
-fviz_cluster(fit, geom = "point", data = mydata, outlier.color = "black", palette = dani) +
-  ggtitle("k = 3")
-```
-
-```{r}
-mydata <- na.omit(mydata)
-
-distance <- get_dist(mydata)
+distance <- get_dist(NewData)
 graph <- fviz_dist(distance, gradient = list(low = "#00AFBB", mid = "white", high = "#FC4E07"))
+fviz_nbclust(NewData, kmeans, method = "wss")
+```
 
+```{r}
 set.seed(224)
 
-fviz_nbclust(mydata, kmeans, method = "wss")
+# K-Means Cluster Analysis
+fit <- kmeans(na.omit(NewData), 4, nstart = 25) #4 cluster solution
+# get cluster means
+aggregate(na.omit(NewData),by=list(fit$cluster),FUN=mean)
+# append cluster assignment
+mydata <- data.frame(na.omit(NewData), fit$cluster)
+```
 
-sil <- silhouette(fit$cluster, dist(mydata))
+```{r}
+fviz_cluster(fit, geom = "point", data = stdata, outlier.color = "black", palette = dani) +
+  ggtitle("k = 4")
+```
+
+```{r}
+clusplot(stdata, fit$cluster, color=TRUE, shade=TRUE,
+   labels=2, lines=0)
+```
+
+```{r}
+clustereddata <- cbind(data, Cluster = fit$cluster)
+
+cluster1 <- subset(clustereddata, Cluster=='1')
+cluster2 <- subset(clustereddata, Cluster=='2')
+cluster3 <- subset(clustereddata, Cluster=='3')
+cluster4 <- subset(clustereddata, Cluster=='4')
+```
+
+```{r}
+sil <- silhouette(fit$cluster, dist(NewData))
 fviz_silhouette(sil)
 ```
 
-
 \newpage
 
+### The clusters individual results
+
 ```{r}
-Results <- as.data.table(aggregate(na.omit(mydata[,19:25]), by=list(cluster=fit$cluster), mean), by = round)
+Results <- as.data.table(aggregate(na.omit(Orgdata[,1:5]), by=list(cluster=fit$cluster), mean), by = round)
 
 Results_Round <- round(Results)
 my_table(Results_Round)
 ```
 
 ```{r}
-Results <- as.data.table(aggregate(na.omit(mydata[,6:9]), by=list(cluster=fit$cluster), mean), by = round)
+Results <- as.data.table(aggregate(na.omit(Orgdata[,6:10]), by=list(cluster=fit$cluster), mean), by = round)
+
+Results_Round <- round(Results,1)
+
+my_table(Results_Round)
+```
+
+```{r}
+Results <- as.data.table(aggregate(na.omit(Orgdata[,11:12]), by=list(cluster=fit$cluster), mean), by = round)
+
+Results_Round <- round(Results,1)
+
+my_table(Results_Round)
+```
+
+```{r}
+Results <- as.data.table(aggregate(na.omit(Orgdata[,13:20]), by=list(cluster=fit$cluster), mean), by = round)
 
 Results_Round <- round(Results)
 my_table(Results_Round)
 ```
 
 ```{r}
-Results <- as.data.table(aggregate(na.omit(mydata[,35:40]), by=list(cluster=fit$cluster), mean), by = round)
+agetable1 <- as.data.table(table(cluster1$AgeCategory))
+colnames(agetable1) <- c("Age", "Frequency")
+  
+agetable2 <- as.data.table(table(cluster2$AgeCategory) )
+colnames(agetable2) <- c("Age", "Frequency")
+
+agetable3 <- as.data.table(table(cluster3$AgeCategory) )
+colnames(agetable3) <- c("Age", "Frequency")
+
+agetable4 <- as.data.table(table(cluster4$AgeCategory) )
+colnames(agetable4) <- c("Age", "Frequency")
+
+my_table(agetable1)
+my_table(agetable2)
+my_table(agetable3)
+my_table(agetable4)
+
+```
+
+```{r}
+table1 <- as.data.table(table(cluster1$Machine))
+colnames(table1) <- c("Age", "Frequency")
+  
+table2 <- as.data.table(table(cluster2$Machine) )
+colnames(table2) <- c("Age", "Frequency")
+
+table3 <- as.data.table(table(cluster3$Machine) )
+colnames(table3) <- c("Age", "Frequency")
+
+table4 <- as.data.table(table(cluster4$Machine) )
+colnames(table4) <- c("Age", "Frequency")
+
+my_table(table1)
+my_table(table2)
+my_table(table3)
+my_table(table4)
+
+```
+
+```{r}
+Results <- as.data.table(aggregate(na.omit(Orgdata[,35:40]), by=list(cluster=fit$cluster), mean), by = round)
 
 Results_Round <- round(Results)
 my_table(Results_Round)
 ```
 
+#### 
 
-#### Caret package
-
-```{r, echo=FALSE, include=FALSE}
-library(caret)
-
-dmy <- dummyVars(" ~ .", data = data[,6], fullRank = T)
-dat_transformed <- data.frame(predict(dmy, newdata = data))
-
-glimps <- glimpse(dat_transformed)
-```
+### Clustering only the numerical
 
 ```{r}
-# Prepare Data
-mydata <- na.omit(dat_transformed) # listwise deletion of missing
-mydata <- scale(dat_transformed) # standardize variables
-```
-
-### Clustering Numerical
-
-```{r}
-# Prepare Data
-NumMydata <- na.omit(data[,c(2:5, 12:17, 19, 21)]) # listwise deletion of missing
-Mydata <- scale(data[,c(2:5, 12:17, 19, 21)]) # standardize variables
+NumMydata <- na.omit(Orgdata[,c(1:12)]) # listwise deletion of missing
+Mydata <- scale(Orgdata[,c(1:12)]) # standardize variables
 ```
 
 ```{r}
@@ -146,9 +209,10 @@ clusplot(mydata, fit$cluster, color=TRUE, shade=TRUE,
 ```{r}
 fviz_cluster(fit, geom = "point", data = mydata, outlier.color = "black", palette = dani) +
   ggtitle("k = 3")
+
 ```
 
-https://towardsdatascience.com/clustering-analysis-in-r-using-k-means-73eca4fb7967
+<https://towardsdatascience.com/clustering-analysis-in-r-using-k-means-73eca4fb7967>
 
 ```{r}
 mydata <- na.omit(mydata)
@@ -164,27 +228,3 @@ fviz_nbclust(mydata, kmeans, method = "wss")
 sil <- silhouette(fit$cluster, dist(mydata))
 fviz_silhouette(sil)
 ```
-
-\newpage
-
-```{r}
-Results <- as.data.table(aggregate(na.omit(NumMydata[,1:5]), by=list(cluster=fit$cluster), mean), by = round)
-
-Results_Round <- round(Results)
-my_table(Results_Round)
-```
-
-```{r}
-Results <- as.data.table(aggregate(na.omit(NumMydata[,6:9]), by=list(cluster=fit$cluster), mean), by = round)
-
-Results_Round <- round(Results)
-my_table(Results_Round)
-```
-
-```{r}
-Results <- as.data.table(aggregate(na.omit(NumMydata[,10:12]), by=list(cluster=fit$cluster), mean), by = round)
-
-Results_Round <- round(Results)
-my_table(Results_Round)
-```
-
