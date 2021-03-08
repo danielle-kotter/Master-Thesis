@@ -171,6 +171,7 @@ ggplot(dataB, aes(x="",y = value, fill = group)) +
          y = ""
          )
 ```
+\newpage
 
 #### Home
 
@@ -376,6 +377,11 @@ ggplot(dataB, aes(x="",y = value, fill = group)) +
   blank_theme  +
     theme(axis.text.x=element_blank(), 
           legend.title = element_text(face = "bold")) +
+    geom_text(aes(x = 1.1, label = value),
+              position = position_stack(vjust = 0.5),
+              size = 3, 
+              check_overlap = TRUE,
+              fontface = "bold") +
   labs(title = "",
          x = "",
          y = ""
@@ -430,13 +436,15 @@ blank_theme <- theme_minimal()+
 ggplot(dataB, aes(x="",y = value, fill = group)) +
   geom_bar(width = 1, stat = "identity") +
   coord_polar("y", start = 0) +
-  scale_fill_manual("Brand chouce:", values = dani)+
+  scale_fill_manual("Brand choice:", values = dani)+
   blank_theme  +
     theme(axis.text.x=element_blank(), 
           legend.title = element_text(face = "bold")) +
   geom_text(aes(x = 1.1, label = value),
               position = position_stack(vjust = 0.5),
-              size = 3) +
+              size = 3, 
+              check_overlap = TRUE,
+              fontface = "bold") +
   labs(title = "",
          x = "",
          y = ""
@@ -494,6 +502,8 @@ ggplot(dataB, aes(x="",y = value, fill = group)) +
          )
 ```
 
+\newpage
+
 ### Multiple option answers:
 
 #### Reasons buying from the supermarket
@@ -511,9 +521,20 @@ dt[
 dt_l <- na.omit(melt(dt, id.vars = "id", measure.vars = c("super_market_pos_1","super_market_pos_2")))
 
 NSupermarket_Positive_Reasons <- dt_l[,table(value)]
-my_table(NSupermarket_Positive_Reasons)
+NewTable<- as.data.table(NSupermarket_Positive_Reasons)
+colnames(NewTable) <- c("Reason", "Frequency")
+my_table(NewTable)
 ```
+```{r, echo=FALSE}
+newdata <- data.frame(
+  Negativereasons=NewTable$Reason,
+  Frequency=NewTable$Frequency
+)
 
+ggplot(newdata, aes(y = Negativereasons, x = Frequency)) + 
+  geom_bar(stat = "identity", fill="#69b3a2", color="#e9ecef") +
+  theme(legend.position="none")
+```
 
 #### Reasons for not buying from the supermarket
 
@@ -537,18 +558,9 @@ my_table(NewTable)
 ```
 
 ```{r, echo=FALSE}
-Absolute <- data.table(Frequency = table(`Supermarket_Negative_ Reasons`))
-Relative <- percent(prop.table(Absolute$Frequency.N))
-freqtable <- cbind(Absolute, Relative)
-colnames(freqtable) <- c("Negative reasons", "Absolute", "Relative")
-
-my_table(freqtable)
-```
-
-```{r, echo=FALSE}
 newdata <- data.frame(
-  Negativereasons=freqtable$`Negative reasons`,
-  Frequency=freqtable$Absolute
+  Negativereasons=NewTable$Reason,
+  Frequency=NewTable$Frequency
 )
 
 ggplot(newdata, aes(y = Negativereasons, x = Frequency)) + 
@@ -571,14 +583,29 @@ dt[
 
 dt_l <- na.omit(melt(dt, id.vars = "id", measure.vars = c("Criteria_type_1","Criteria_type_2")))
 
-NCriteria_Type_Coffee <- dt_l[,table(value)]
-my_table(NCriteria_Type_Coffee)
+NewTable <- dt_l[,table(value)]
+NewTable<- as.data.table(NSupermarket_Negative_Reasons)
+colnames(NewTable) <- c("Reason", "Frequency")
+my_table(NewTable)
 ```
 
+```{r, echo=FALSE}
+newdata <- data.frame(
+  Negativereasons=NewTable$Reason,
+  Frequency=NewTable$Frequency
+)
 
-#### Purchase decisions 1-5
+ggplot(newdata, aes(y = Negativereasons, x = Frequency)) + 
+  geom_bar(stat = "identity", fill="#69b3a2", color="#e9ecef") +
+  theme(legend.position="none")
+```
 
-##### Price
+\newpage
+
+### Purchase decisions 1-5
+
+
+#### Price
 
 ```{r, echo=FALSE}
 Absolute <- data.table(Frequency = table(Purchase_Price))
@@ -617,10 +644,14 @@ ggplot(dataB, aes(x="",y = value, fill = group)) +
   scale_fill_manual("Decision:", values = dani)+
   blank_theme  +
     theme(axis.text.x=element_blank(), 
-          legend.title = element_text(face = "bold")) +
+          legend.title = element_text(hjust = 0.5, size=11, face = "bold"),
+           plot.title = element_text(hjust = 0.5, size=16, face="bold")
+          ) +
   geom_text(aes(x = 1.1, label = value),
               position = position_stack(vjust = 0.5),
-              size = 3) +
+              size = 3, 
+              check_overlap = TRUE,
+              fontface = "bold") +
   labs(title = "Price",
          x = "",
          y = ""
@@ -666,10 +697,14 @@ ggplot(dataB, aes(x="",y = value, fill = group)) +
   scale_fill_manual("Decision:", values = dani)+
   blank_theme  +
     theme(axis.text.x=element_blank(), 
-          legend.title = element_text(face = "bold")) +
+          legend.title = element_text(hjust = 0.5, size=11, face = "bold"),
+           plot.title = element_text(hjust = 0.5, size=16, face="bold")
+          ) +
   geom_text(aes(x = 1.1, label = value),
               position = position_stack(vjust = 0.5),
-              size = 3) +
+              size = 3, 
+              check_overlap = TRUE,
+              fontface = "bold") +
   labs(title = "Sustainability",
          x = "",
          y = ""
@@ -715,10 +750,14 @@ ggplot(dataB, aes(x="",y = value, fill = group)) +
   scale_fill_manual("Decision:", values = dani)+
   blank_theme  +
     theme(axis.text.x=element_blank(), 
-          legend.title = element_text(face = "bold")) +
+          legend.title = element_text(hjust = 0.5, size=11, face = "bold"),
+           plot.title = element_text(hjust = 0.5, size=16, face="bold")
+          ) +
   geom_text(aes(x = 1.1, label = value),
               position = position_stack(vjust = 0.5),
-              size = 3) +
+              size = 3, 
+              check_overlap = TRUE,
+              fontface = "bold") +
   labs(title = "Certificate",
          x = "",
          y = ""
@@ -764,10 +803,14 @@ ggplot(dataB, aes(x="",y = value, fill = group)) +
   scale_fill_manual("Decision:", values = dani)+
   blank_theme  +
     theme(axis.text.x=element_blank(), 
-          legend.title = element_text(face = "bold")) +
+          legend.title = element_text(hjust = 0.5, size=11, face = "bold"),
+           plot.title = element_text(hjust = 0.5, size=16, face="bold")
+          ) +
   geom_text(aes(x = 1.1, label = value),
               position = position_stack(vjust = 0.5),
-              size = 3) +
+              size = 3, 
+              check_overlap = TRUE,
+              fontface = "bold") +
   labs(title = "Fair trade",
          x = "",
          y = ""
@@ -813,15 +856,21 @@ ggplot(dataB, aes(x="",y = value, fill = group)) +
   scale_fill_manual("Decision:", values = dani)+
   blank_theme  +
     theme(axis.text.x=element_blank(), 
-          legend.title = element_text(face = "bold")) +
+          legend.title = element_text(hjust = 0.5, size=11, face = "bold"),
+           plot.title = element_text(hjust = 0.5, size=16, face="bold")
+          ) +
   geom_text(aes(x = 1.1, label = value),
               position = position_stack(vjust = 0.5),
-              size = 3) +
+              size = 3, 
+              check_overlap = TRUE,
+              fontface = "bold") +
   labs(title = "Packaging",
          x = "",
          y = ""
          )
 ```
+
+\newpage
 
 ### Combined data
 
@@ -913,28 +962,23 @@ dt[
 dt_l <- na.omit(melt(dt, id.vars = "id", measure.vars = c("Subscription_Not_Likely_1","Subscription_Not_Likely_2")))
 
 NSubscription_Not_Likely <- dt_l[,table(value)]
-my_table(NSubscription_Not_Likely)
+NewTable<- as.data.table(NSubscription_Not_Likely)
+colnames(NewTable) <- c("Reason", "Frequency")
+my_table(NewTable)
 ```
 
-```{r, echo=FALSE}
-Absolute <- data.table(Frequency = table(Subscription_Not_Likely))
-Relative <- percent(prop.table(Absolute$Frequency.N))
-freqtable <- cbind(Absolute, Relative)
-colnames(freqtable) <- c("Reasons", "Absolute", "Relative")
-
-my_table(freqtable)
-```
 
 ```{r, echo=FALSE}
 newdata <- data.frame(
-  Reasons=freqtable$Reasons,
-  Frequency=freqtable$Absolute
+  Negativereasons=NewTable$Reason,
+  Frequency=NewTable$Frequency
 )
 
-ggplot(newdata, aes(y = Reasons, x = Frequency)) + 
+ggplot(newdata, aes(y = Negativereasons, x = Frequency)) + 
   geom_bar(stat = "identity", fill="#69b3a2", color="#e9ecef") +
   theme(legend.position="none")
 ```
+
 
 ------------------------------------------------------------------------
 
@@ -1282,8 +1326,8 @@ ggplot(data = data, aes(x= AmountWeek, fill=AgeCategory)) + geom_density(alpha=.
   geom_point(size=1) +
   geom_smooth(method="lm", fill = NA, color="#69b3a2", fullrange=TRUE, formula = y ~ x) +
    theme(plot.title = element_text(hjust = 0.5)) +
-        labs(title = "Amount of coffee consumer by the amount of money spend",
-         y = "Coffee cups consumer per week",
+        labs(title = "Amount of coffee consumed and the amount of money spend",
+         y = "Coffee cups consumed per week",
          x = "Amount spend on coffee per month"
          )
 ```
@@ -1293,8 +1337,8 @@ ggplot(data = data, aes(x= AmountWeek, fill=AgeCategory)) + geom_density(alpha=.
   geom_point(size=1) +
   geom_smooth(method="lm", fill = NA, color="#69b3a2", fullrange=TRUE, formula = y ~ x) +
    theme(plot.title = element_text(hjust = 0.5)) +
-        labs(title = "Amount of coffee consumer by the amount of money spend on groceries",
-         y = "Coffee cups consumer per week",
+        labs(title = "Amount of coffee consumed by the amount of money spend on groceries",
+         y = "Coffee cups consumed per week",
          x = "Amount spend on groceries per month"
          )
 ```
