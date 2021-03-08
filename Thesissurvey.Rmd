@@ -1173,7 +1173,7 @@ box5 <- ggplot(data=data, aes(x=Subscription_Likely, y="", fill="")) +
       legend.position="none",
       plot.title = element_text(size=15)
       ) +
-    ggtitle("How likely are you to set up an subscription") +
+    ggtitle("How likely are you to set up an subscription?") +
     theme(plot.title = element_text(hjust = 0.5)) +
     xlab("")+
     ylab("Quantity")
