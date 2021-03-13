@@ -520,11 +520,16 @@ dt[
 
 dt_l <- na.omit(melt(dt, id.vars = "id", measure.vars = c("super_market_pos_1","super_market_pos_2")))
 
+value <- as.logical(value)
+
 NSupermarket_Positive_Reasons <- dt_l[,table(value)]
-NewTable<- as.data.table(NSupermarket_Positive_Reasons)
+NewTable <- as.data.table(NSupermarket_Positive_Reasons)
+
+NewTable <- ddply(NewTable, .(value), summarise, sum = sum(N))
 colnames(NewTable) <- c("Reason", "Frequency")
 my_table(NewTable)
 ```
+
 ```{r, echo=FALSE}
 newdata <- data.frame(
   Negativereasons=NewTable$Reason,

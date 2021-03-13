@@ -37,7 +37,7 @@ pal9 <- jcolors("pal9")
 
 Primarily several multi-option variables are removed from the dataset. Next dummies are created for the categorical variables.
 
-*If the option is not selected, the answer corresponds with 0. \
+*If the option is not selected, the answer corresponds with 0.\
 If the option has been selected, the answer corresponds with 1.*
 
 ```{r}

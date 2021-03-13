@@ -39,7 +39,8 @@ packages = c(
   "cluster",
   "mltools",
   "factoextra",
-  "fastDummies"
+  "fastDummies",
+  "plyr"
 )
 
 invisible(
