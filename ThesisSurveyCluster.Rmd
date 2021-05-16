@@ -31,7 +31,7 @@ htmltools::img(
 4. Individual cluster analysis - sub-sample
 
 
-## Loading dataset
+## Loading datasets & Packages
 
 ```{r data, echo=FALSE, include=FALSE}
 data <- read_excel("Main doc survey.xlsx")
@@ -40,6 +40,9 @@ attach(data)
 dani <- c( "#ffa500", "#34495E", "#69b3a2", "#ffd561", "#ee5c42", "#DAF7A6", "#C8A2C8", "#5c3170", "#990000", "#C70039", "#34495E", "#909497")
 
 pal9 <- jcolors("pal9")
+
+library(FactoMineR)
+library(factoextra)
 ```
 
 [Reference to Methodology applied.](https://towardsdatascience.com/k-means-clustering-algorithm-applications-evaluation-methods-and-drawbacks-aa03e644b48a "Reference to Methodology applied."){.uri}
@@ -250,27 +253,22 @@ DK1.mds$GOF
 ```
 
 ```{r}
-library(factoextra)
-fviz_eig(DK2.PCA, addlabels = TRUE, ylim = c(0, 50))
-```
-
-
-```{r}
 #require(easyCODA)
 
 DK2.PCA <- PCA(as.matrix(NewData))
-PLOT.PCA(DK2.PCA, map="asymmetric")
+#PLOT.PCA(DK2.PCA, map="asymmetric")
 summary(DK2.PCA)
 
 DK.PCA <- PCA(NewData)
 par(mar=c(4.2,4,4,1), font.lab=2, cex.axis=0.8, mgp=c(2.5,0.7,0))
-PLOT.PCA(DK.PCA, map="asymmetric", rescale=0.05, main="PCA with chi-square standardization")
+#PLOT.PCA(DK.PCA, map="asymmetric", rescale=0.05, main="PCA with chi-square standardization")
 ```
 
+```{r}
+fviz_eig(DK2.PCA, addlabels = TRUE, ylim = c(0, 50))
+```
 
 ```{r}
-library(FactoMineR)
-
 DK2.PCA <- PCA(as.matrix(stdata))
 
 clusters <- as.factor(fit$cluster)
