@@ -9,7 +9,7 @@ knit: pagedown::chrome_print
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, class.source = "watch-out", options(scipen=999), out.width = "65%", warning = FALSE, comment = "") 
+knitr::opts_chunk$set(echo = FALSE, class.source = "watch-out", options(scipen=999), out.width = "60%", warning = FALSE, comment = "") 
 source("www/init.R")
 source("www/Table_Design.R")
 ```
@@ -43,25 +43,16 @@ pal9 <- jcolors("pal9")
 
     - Summary
 
-    - Confidence intervals
-
     - Graphs
 
 - Boxplots - numerical
-
-- Joint distribution tables
-
-- Outliers
 
 - Parametric testing
 
 - Relationships & correlations
 
-    -   Residual plots
-
 - Regressions
 
-- Data problems
 
 ### Introduction
 
@@ -72,6 +63,8 @@ aggr(dd, numbers = TRUE, prop = c(TRUE, FALSE), cex.axis = 0.5)
 ```
 
 \newpage 
+
+### Data set
 
 The variables included in the data set are:
 
@@ -508,7 +501,7 @@ ggplot(dataB, aes(x="",y = value, fill = group)) +
 
 #### Reasons buying from the supermarket
 
-```{r}
+```{r, include=FALSE}
 # Reasons for buying from the supermarket
 dt <- data.table(data)
 dt[,id:=.I]
@@ -520,30 +513,37 @@ dt[
 
 dt_l <- na.omit(melt(dt, id.vars = "id", measure.vars = c("super_market_pos_1","super_market_pos_2")))
 
-value <- as.logical(value)
+NewTable <- as.data.table(dt_l[,table(as.factor(value))])
 
-NSupermarket_Positive_Reasons <- dt_l[,table(value)]
-NewTable <- as.data.table(NSupermarket_Positive_Reasons)
+NewTable$V1 <- as.factor(NewTable$V1)
+NewTable <- NewTable[, list(y=sum(N)),by=V1]
 
-NewTable <- ddply(NewTable, .(value), summarise, sum = sum(N))
 colnames(NewTable) <- c("Reason", "Frequency")
+my_table(NewTable)
+```
+
+```{r}
+# Reasons for buying from the supermarket
+
+NewTable <- as.data.table(data.frame(Reasons = c("I am satisfied with the product", "Price", "Time-saving", "Convenience",  "I do not purchase coffee from the supermarket", "I do not have specialty stores near where I live", "Other"), Frequency = c(90, 71, 56, 53, 45, 16, 3) ))
+
 my_table(NewTable)
 ```
 
 ```{r, echo=FALSE}
 newdata <- data.frame(
-  Negativereasons=NewTable$Reason,
-  Frequency=NewTable$Frequency
+  Reasons = NewTable$Reasons,
+  Frequency = NewTable$Frequency
 )
 
-ggplot(newdata, aes(y = Negativereasons, x = Frequency)) + 
+ggplot(newdata, aes(y =  Reasons, x = Frequency)) + 
   geom_bar(stat = "identity", fill="#69b3a2", color="#e9ecef") +
   theme(legend.position="none")
 ```
 
 #### Reasons for not buying from the supermarket
 
-```{r}
+```{r, include=FALSE}
 dt <- data.table(data)
 dt[,id:=.I]
 
@@ -562,20 +562,28 @@ colnames(NewTable) <- c("Reason", "Frequency")
 my_table(NewTable)
 ```
 
+```{r}
+# Reasons for not buying from the supermarket
+
+NewTable <- as.data.table(data.frame(Reasons = c("No reason", "Better quality elsewhere", "Not enough variety", "Not wanting to support big cooperations", "It is not fresh", "Lack of sustainable options", "I don't buy from supermarkets", "Price"), Frequency = c(102, 96, 28, 22, 17, 8, 7, 2) ))
+
+my_table(NewTable)
+```
+
 ```{r, echo=FALSE}
 newdata <- data.frame(
-  Negativereasons=NewTable$Reason,
-  Frequency=NewTable$Frequency
+  Reasons = NewTable$Reasons,
+  Frequency = NewTable$Frequency
 )
 
-ggplot(newdata, aes(y = Negativereasons, x = Frequency)) + 
+ggplot(newdata, aes(y = Reasons, x = Frequency)) + 
   geom_bar(stat = "identity", fill="#69b3a2", color="#e9ecef") +
   theme(legend.position="none")
 ```
 
 #### Criteria for choosing the type of coffee
 
-```{r}
+```{r, include=FALSE}
 dt <- data.table(data)
 dt[,id:=.I]
 
@@ -589,18 +597,24 @@ dt[
 dt_l <- na.omit(melt(dt, id.vars = "id", measure.vars = c("Criteria_type_1","Criteria_type_2")))
 
 NewTable <- dt_l[,table(value)]
-NewTable<- as.data.table(NSupermarket_Negative_Reasons)
+NewTable <- as.data.table(NewTable)
 colnames(NewTable) <- c("Reason", "Frequency")
+my_table(NewTable)
+```
+
+```{r}
+NewTable <- as.data.table(data.frame(Reasons = c("Flavour profile", "Price", "Roast level", "Origin", "Arabica or Robusta", "Sustainability & Fair Trade"), Frequency = c(149, 89, 64, 38, 18, 16) ))
+
 my_table(NewTable)
 ```
 
 ```{r, echo=FALSE}
 newdata <- data.frame(
-  Negativereasons=NewTable$Reason,
-  Frequency=NewTable$Frequency
+  Reasons = NewTable$Reasons,
+  Frequency = NewTable$Frequency
 )
 
-ggplot(newdata, aes(y = Negativereasons, x = Frequency)) + 
+ggplot(newdata, aes(y = Reasons, x = Frequency)) + 
   geom_bar(stat = "identity", fill="#69b3a2", color="#e9ecef") +
   theme(legend.position="none")
 ```
@@ -646,7 +660,7 @@ blank_theme <- theme_minimal()+
 ggplot(dataB, aes(x="",y = value, fill = group)) +
   geom_bar(width = 1, stat = "identity") +
   coord_polar("y", start = 0) +
-  scale_fill_manual("Decision:", values = dani)+
+  scale_fill_manual("Importance:", values = dani)+
   blank_theme  +
     theme(axis.text.x=element_blank(), 
           legend.title = element_text(hjust = 0.5, size=11, face = "bold"),
@@ -663,7 +677,7 @@ ggplot(dataB, aes(x="",y = value, fill = group)) +
          )
 ```
 
-##### Sustainability
+#### Sustainability
 
 ```{r, echo=FALSE}
 Absolute <- data.table(Frequency = table(Purchase_Sustainability))
@@ -699,7 +713,7 @@ blank_theme <- theme_minimal()+
 ggplot(dataB, aes(x="",y = value, fill = group)) +
   geom_bar(width = 1, stat = "identity") +
   coord_polar("y", start = 0) +
-  scale_fill_manual("Decision:", values = dani)+
+  scale_fill_manual("Importance:", values = dani)+
   blank_theme  +
     theme(axis.text.x=element_blank(), 
           legend.title = element_text(hjust = 0.5, size=11, face = "bold"),
@@ -716,7 +730,7 @@ ggplot(dataB, aes(x="",y = value, fill = group)) +
          )
 ```
 
-##### Certificates
+#### Certificates
 
 ```{r, echo=FALSE}
 Absolute <- data.table(Frequency = table(Purchase_Certificate))
@@ -752,7 +766,7 @@ blank_theme <- theme_minimal()+
 ggplot(dataB, aes(x="",y = value, fill = group)) +
   geom_bar(width = 1, stat = "identity") +
   coord_polar("y", start = 0) +
-  scale_fill_manual("Decision:", values = dani)+
+  scale_fill_manual("Importance:", values = dani)+
   blank_theme  +
     theme(axis.text.x=element_blank(), 
           legend.title = element_text(hjust = 0.5, size=11, face = "bold"),
@@ -769,7 +783,7 @@ ggplot(dataB, aes(x="",y = value, fill = group)) +
          )
 ```
 
-##### Fairtrade
+#### Fairtrade
 
 ```{r, echo=FALSE}
 Absolute4 <- data.table(Frequency = table(Purchase_Fairtrade))
@@ -805,7 +819,7 @@ blank_theme <- theme_minimal()+
 ggplot(dataB, aes(x="",y = value, fill = group)) +
   geom_bar(width = 1, stat = "identity") +
   coord_polar("y", start = 0) +
-  scale_fill_manual("Decision:", values = dani)+
+  scale_fill_manual("Importance:", values = dani)+
   blank_theme  +
     theme(axis.text.x=element_blank(), 
           legend.title = element_text(hjust = 0.5, size=11, face = "bold"),
@@ -822,7 +836,7 @@ ggplot(dataB, aes(x="",y = value, fill = group)) +
          )
 ```
 
-##### Packaging
+#### Packaging
 
 ```{r, echo=FALSE}
 Absolute5 <- data.table(Frequency = table(Purchase_Packaging))
@@ -858,7 +872,7 @@ blank_theme <- theme_minimal()+
 ggplot(dataB, aes(x="",y = value, fill = group)) +
   geom_bar(width = 1, stat = "identity") +
   coord_polar("y", start = 0) +
-  scale_fill_manual("Decision:", values = dani)+
+  scale_fill_manual("Importance:", values = dani)+
   blank_theme  +
     theme(axis.text.x=element_blank(), 
           legend.title = element_text(hjust = 0.5, size=11, face = "bold"),
@@ -896,7 +910,7 @@ Combined_data %>%
 ```
 
 
-```{r}
+```{r,  out.width="75%"}
 # creating a dataset
 Factor <- c(rep("Price", 5), rep("Sustainability", 5), rep("Certificates", 5), rep("Fairtrade", 5),  rep("Packaging",5))
 
@@ -954,7 +968,7 @@ ggplot(newdata, aes(y = FrequencyConsumption, x = Frequency)) +
 
 #### Reasons for not being likely to set up a subscription
 
-```{r}
+```{r include=FALSE}
 dt <- data.table(data)
 dt[,id:=.I]
 
@@ -973,13 +987,19 @@ my_table(NewTable)
 ```
 
 
+```{r}
+NewTable <- as.data.table(data.frame(Reasons = c("I do not like being stuck with subscriptions", "I am happy with my coffee now", "The price", "I do not consume enough coffee at home", "The packaging that is required for delivery", "No reason", "I already have a subscription", "Other"), Frequency = c(111, 109, 56, 22, 15, 15, 10, 4) ))
+
+my_table(NewTable)
+```
+
 ```{r, echo=FALSE}
 newdata <- data.frame(
-  Negativereasons=NewTable$Reason,
-  Frequency=NewTable$Frequency
+  Reasons = NewTable$Reasons,
+  Frequency = NewTable$Frequency
 )
 
-ggplot(newdata, aes(y = Negativereasons, x = Frequency)) + 
+ggplot(newdata, aes(y = Reasons, x = Frequency)) + 
   geom_bar(stat = "identity", fill="#69b3a2", color="#e9ecef") +
   theme(legend.position="none")
 ```
@@ -1268,6 +1288,17 @@ chisq.test(KnowledgeCoffee, PurchaseLocation)
 chisq.test(KnowledgeCoffee, PurchaseLocation, simulate.p.value = TRUE, B = 500)
 ```
 
+
+```{r}
+chisq.test(Subscription_Likely, KnowledgeCoffee)
+chisq.test(Subscription_Likely, KnowledgeCoffee, simulate.p.value = TRUE, B = 500)
+```
+
+```{r}
+chisq.test(Subscription_Likely, AmountWeek)
+chisq.test(Subscription_Likely, AmountWeek, simulate.p.value = TRUE, B = 500)
+```
+
 ------------------------------------------------------------------------
 
 \newpage
@@ -1350,20 +1381,13 @@ ggplot(data = data, aes(x= AmountWeek, fill=AgeCategory)) + geom_density(alpha=.
 
 ------------------------------------------------------------------------
 
-\newpage
-
 ### Regressions
 
 ```{r}
-summary(lm(Subscription_Likely~KnowledgeCoffee))
+model1 <- (lm(Subscription_Likely ~ KnowledgeCoffee + Purchase_Fairtrade))
+model2 <- (lm(Subscription_Likely ~ KnowledgeCoffee + AmountWeek + MoneyCoffee))
+stargazer(model1, model2, type="text")
+vif(model1)
+vif(model2)
 ```
 
-Incl categorical variables as dummies
-
-Cooks distance --\> outliers
-
-------------------------------------------------------------------------
-
-\newpage
-
-### Data problems

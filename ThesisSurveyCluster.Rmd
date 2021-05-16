@@ -22,6 +22,17 @@ htmltools::img(
 )
 ```
 
+# Clustering & Correspondence analysis
+
+**Steps:**
+1. Decide which columns to use, decide coding to get homogeneous for clustering
+2. Clustering
+3. Correspondence analysis, bring in demographics. 
+4. Individual cluster analysis - sub-sample
+
+
+## Loading dataset
+
 ```{r data, echo=FALSE, include=FALSE}
 data <- read_excel("Main doc survey.xlsx")
 attach(data)
@@ -33,7 +44,7 @@ pal9 <- jcolors("pal9")
 
 [Reference to Methodology applied.](https://towardsdatascience.com/k-means-clustering-algorithm-applications-evaluation-methods-and-drawbacks-aa03e644b48a "Reference to Methodology applied."){.uri}
 
-### One-hot encoding
+### Transforming variables
 
 Primarily several multi-option variables are removed from the dataset. Next dummies are created for the categorical variables.
 
@@ -41,21 +52,74 @@ Primarily several multi-option variables are removed from the dataset. Next dumm
 If the option has been selected, the answer corresponds with 1.*
 
 ```{r}
-data <- data[,-match(c("Criteria_Type_Coffee", "Subscription_Not_Likely", "Supermarket_Negative_ Reasons", "Supermarket_Positive_ Reasons", "Language", "Participant"),names(data))]
+data <- separate(
+  data,
+  Criteria_Type_Coffee,
+  into = c("Criteria_A", "Criteria_B"),
+  sep = "([,])",
+  remove = TRUE,
+  convert = FALSE,
+  extra = "drop",
+  fill = "right",
+)
 
-dataf <- dummy_cols(data, select_columns = c("Machine", "BrandChange", "PurchaseLocation", "Education", "AgeCategory", "Frequency_Specialty", "Home", "Occupation", "Gender"), remove_selected_columns = TRUE, ignore_na = TRUE)
+data <- separate(
+  data,
+  Subscription_Not_Likely,
+  into = c("Subscription_A", "Subscription_B"),
+  sep = "([,])",
+  remove = TRUE,
+  convert = FALSE,
+  extra = "drop",
+  fill = "right",
+)
+
+data <- separate(
+  data,
+  "Supermarket_Negative_ Reasons",
+  into = c("Supermarket_NO_A", "Supermarket_NO_B"),
+  sep = "([,])",
+  remove = TRUE,
+  convert = FALSE,
+  extra = "drop",
+  fill = "right",
+)
+
+data <- separate(
+  data,
+  "Supermarket_Positive_ Reasons",
+  into = c("Supermarket_YES_A", "Supermarket_YES_B"),
+  sep = "([,])",
+  remove = TRUE,
+  convert = FALSE,
+  extra = "drop",
+  fill = "right",
+)
 ```
 
-## Clustering including categorical variables
+### One-hot Encoding
 
-The next step is to remove this missing variables (NA), standardize the numerical variables and combine to make the new data table to be used for the cluster analysis.
+```{r, echo=FALSE}
+data <- data[,-match(c("Language", "Participant", "Home", "Occupation", "Gender", "Education", "AgeCategory", "Criteria_B", "Subscription_B", "Supermarket_NO_B", "Supermarket_YES_B"),names(data))]
+
+dataf <- dummy_cols(data, select_columns = c("Criteria_A", "Subscription_A", "Supermarket_NO_A", "Supermarket_YES_A", "Machine", "BrandChange", "PurchaseLocation",  "Frequency_Specialty"), remove_selected_columns = TRUE, ignore_na = TRUE)
+```
+
+Separate the second, responses to 0.1.  Do not categorize on demographics together with the preferences. Everything to do with coffee has to be in cluster analysis.
 
 ```{r}
 # Prepare Data
 Orgdata <- na.omit(dataf) # listwise deletion of missing
 stdata <- scale(Orgdata[,c(1:12)]) # standardize variables
-NewData <- cbind(stdata, Orgdata[,c(13:50)])
+NewData <- cbind(stdata, Orgdata[,c(13:64)])
 ```
+
+
+## Clustering including categorical variables
+
+The next step is to remove this missing variables (NA), standardize the numerical variables and combine to make the new data table to be used for the cluster analysis.
+
+### Finding optimal number of clusters
 
 Based on the graph below, I have decided to use 4 numbers of cluster.
 
@@ -67,26 +131,54 @@ graph <- fviz_dist(distance, gradient = list(low = "#00AFBB", mid = "white", hig
 fviz_nbclust(NewData, kmeans, method = "wss")
 ```
 
+## Performing clusters
+
 ```{r}
-set.seed(224)
+set.seed(1234)
 
 # K-Means Cluster Analysis
-fit <- kmeans(na.omit(NewData), 4, nstart = 25) #4 cluster solution
-# get cluster means
-aggregate(na.omit(NewData),by=list(fit$cluster),FUN=mean)
+fit <- kmeans(na.omit(NewData), centers = 4, nstart = 50) #4 cluster solution
+fit2 <- kmeans(na.omit(NewData), centers = 3, nstart = 50) #3 cluster solution
+fit3 <- kmeans(na.omit(NewData), centers = 2, nstart = 50) #2 cluster solution
+fit4 <- kmeans(na.omit(NewData), centers = 1, nstart = 50) #1 cluster solution
+```
+
+
+**Getting cluster means:**
+
+```{r}
+fitMeans <- aggregate(Orgdata,
+  by=list(cluster = fit$cluster),
+  FUN=mean,
+  )
+fitMeans <- round(fitMeans)
+my_table(fitMeans)
+```
+
+**Adding cluster classification to the original data set**
+
+```{r}
 # append cluster assignment
 mydata <- data.frame(na.omit(NewData), fit$cluster)
 ```
 
-```{r}
-fviz_cluster(fit, geom = "point", data = stdata, outlier.color = "black", palette = dani) +
-  ggtitle("k = 4")
-```
+
+**Summary fit k=4**
 
 ```{r}
-clusplot(stdata, fit$cluster, color=TRUE, shade=TRUE,
-   labels=2, lines=0)
+print(fit)
 ```
+
+
+**Within sum of squares:**
+
+```{r}
+print(fit$withinss)
+print(fit2$withinss)
+print(fit3$withinss)
+```
+
+**Creating new data sets for each cluster group**
 
 ```{r}
 clustereddata <- cbind(data, Cluster = fit$cluster)
@@ -97,10 +189,166 @@ cluster3 <- subset(clustereddata, Cluster=='3')
 cluster4 <- subset(clustereddata, Cluster=='4')
 ```
 
+
+### Visualizing clusters
+
+Provides ggplot2-based elegant visualization of partitioning methods including kmeans [stats package]; pam, clara and fanny [cluster package]; dbscan [fpc package]; Mclust [mclust package]; HCPC [FactoMineR]; hkmeans [factoextra]. Observations are represented by points in the plot, using principal components if ncol(data) > 2. An ellipse is drawn around each cluster.
+
+```{r}
+fviz_cluster(fit, geom = "point", data = stdata, outlier.color = "black", palette = dani) + ggtitle("k = 4")
+
+p1 <- fviz_cluster(fit, geom = "point", data = stdata, outlier.color = "black", palette = dani) + ggtitle("k = 4")
+
+p2 <- fviz_cluster(fit2, geom = "point", data = stdata, outlier.color = "black", palette = dani) + ggtitle("k = 3")
+
+p3 <- fviz_cluster(fit3, geom = "point", data = stdata, outlier.color = "black", palette = dani) + ggtitle("k = 2")
+
+p4 <- fviz_cluster(fit4, geom = "point", data = stdata, outlier.color = "black", palette = dani) + ggtitle("k = 1")
+
+grid.arrange(p1, p2, p3, p4, nrow = 2)
+```
+
+
+```{r}
+Subdata <- data.frame("Money Coffee" = clustereddata$MoneyCoffee, "Money Groceries" = clustereddata$MoneyGroceries, "Amount Out per month" = clustereddata$AmountOutMonth, 'Amount per week' = clustereddata$AmountWeek)
+
+par(mar=c(2,4,3,1), font.lab=2, mfrow=c(1,4), mgp=c(2,0.7,0))
+for(j in 1:4) boxplot(Subdata[,j] ~ clustereddata$Cluster, main=colnames(Subdata)[j], 
+                      col=c("#34495E", "#69b3a2"), ylab="%")
+```
+
+```{r}
+Subdata <- data.frame("Knowledge Coffee" = clustereddata$KnowledgeCoffee, 'Subscription Likeliness' = clustereddata$Subscription_Likely, "App Likeliness" = clustereddata$App_Likely)
+
+par(mar=c(2,4,3,1), font.lab=2, mfrow=c(1,3), mgp=c(2,0.7,0))
+for(j in 1:3) boxplot(Subdata[,j] ~ clustereddata$Cluster, main=colnames(Subdata)[j], 
+                      col=c("#34495E", "#69b3a2"), ylab="%")
+```
+
+```{r}
+Subdata <- data.frame(Price = clustereddata$Purchase_Price, Sustainability = clustereddata$Purchase_Sustainability, Certification = clustereddata$Purchase_Certificate, Fairtrade = clustereddata$Purchase_Fairtrade, Packaging = clustereddata$Purchase_Packaging)
+
+par(mar=c(2,4,3,1), font.lab=2, mfrow=c(1,5), mgp=c(2,0.7,0))
+for(j in 1:5) boxplot(Subdata[,j] ~ clustereddata$Cluster, main=colnames(Subdata)[j], 
+                      col=c("#34495E", "#69b3a2"), ylab="%")
+```
+
+## Principal component analysis
+
+```{r}
+#PCA(stdata, scale.unit = TRUE, ncp = 5, graph = TRUE)
+```
+
+```{r}
+DK2.dist <- dist(NewData)
+DK1.mds <- cmdscale(DK2.dist, eig=TRUE)
+
+plot(DK1.mds$points, asp=1, main="Distances",
+     xlab="MDS dimension 1", ylab="MDS dimension 2", type="p", col="#69b3a2", font=2, cex=0.8)
+
+DK1.mds$GOF
+```
+
+```{r}
+library(factoextra)
+fviz_eig(DK2.PCA, addlabels = TRUE, ylim = c(0, 50))
+```
+
+
+```{r}
+#require(easyCODA)
+
+DK2.PCA <- PCA(as.matrix(NewData))
+PLOT.PCA(DK2.PCA, map="asymmetric")
+summary(DK2.PCA)
+
+DK.PCA <- PCA(NewData)
+par(mar=c(4.2,4,4,1), font.lab=2, cex.axis=0.8, mgp=c(2.5,0.7,0))
+PLOT.PCA(DK.PCA, map="asymmetric", rescale=0.05, main="PCA with chi-square standardization")
+```
+
+
+```{r}
+library(FactoMineR)
+
+DK2.PCA <- PCA(as.matrix(stdata))
+
+clusters <- as.factor(fit$cluster)
+
+fviz_pca_ind(DK2.PCA,
+             geom.ind = "point", # show points only (nbut not "text")
+             col.ind = clusters, # color by groups
+             palette = c("#ffa500", "#34495E", "#69b3a2", "#ffd561"),
+             addEllipses = TRUE, # Concentration ellipses
+             legend.title = "Clusters"
+             )
+```
+
+### Biplots
+
+```{r}
+fviz_pca_biplot(DK2.PCA, 
+                col.ind = clusters, palette = c("#ffa500", "#34495E", "#69b3a2", "#ffd561"),
+                addEllipses = TRUE, label = "var",
+                col.var = "black", repel = TRUE,
+                legend.title = "Clusters") 
+```
+
+**Sub setted data**
+
+```{r}
+Subdata <- data.frame(Price = clustereddata$Purchase_Price, Sustainability = clustereddata$Purchase_Sustainability, Certification = clustereddata$Purchase_Certificate, Fairtrade = clustereddata$Purchase_Fairtrade, Packaging = clustereddata$Purchase_Packaging)
+
+Subdata.PCA <- PCA(as.matrix(Subdata))
+
+fviz_pca_biplot(Subdata.PCA, 
+                col.ind = clusters, palette = c("#ffa500", "#34495E", "#69b3a2", "#ffd561"),
+                addEllipses = TRUE, label = "var",
+                col.var = "black", repel = TRUE,
+                legend.title = "Clusters") 
+```
+
+
+```{r, echo=FALSE, include=FALSE}
+require(rgl)
+DK2.dist <- dist(NewData)
+DK.mds <- cmdscale(DK2.dist, eig=TRUE, k=4)
+plot3d(DK.mds$points[,c(1,3,2)], xlab="dim1", ylab="dim3", zlab="dim2", type="p")
+
+play3d(spin3d(c(0,0,1)), duration=12)
+
+#rgl.snapshot("view3D.png")
+```
+
+
+
+
+```{r}
+DK2.PCA <- PCA(NewData, graph = FALSE)
+
+# Contributions of variables to PC1
+fviz_contrib(DK2.PCA, choice = "var", axes = 1, top = 10)
+# Contributions of variables to PC2
+fviz_contrib(DK2.PCA, choice = "var", axes = 2, top = 10)
+```
+
+```{r}
+grp <- as.factor(fit$cluster)
+# Color variables by groups
+fviz_pca_var(DK2.PCA, col.var = grp, 
+             palette = c("#ffa500", "#34495E", "#69b3a2", "#ffd561"),
+             legend.title = "Cluster")
+```
+
 ```{r}
 sil <- silhouette(fit$cluster, dist(NewData))
 fviz_silhouette(sil)
 ```
+
+## Correspondence Analysis
+
+Cross tabulations, two categorical variables
+
 
 \newpage
 
@@ -153,27 +401,64 @@ my_table(agetable1)
 my_table(agetable2)
 my_table(agetable3)
 my_table(agetable4)
-
 ```
 
 ```{r}
 table1 <- as.data.table(table(cluster1$Machine))
-colnames(table1) <- c("Age", "Frequency")
+colnames(table1) <- c("Machine", "Frequency")
   
 table2 <- as.data.table(table(cluster2$Machine) )
-colnames(table2) <- c("Age", "Frequency")
+colnames(table2) <- c("Machine", "Frequency")
 
 table3 <- as.data.table(table(cluster3$Machine) )
-colnames(table3) <- c("Age", "Frequency")
+colnames(table3) <- c("Machine", "Frequency")
 
 table4 <- as.data.table(table(cluster4$Machine) )
-colnames(table4) <- c("Age", "Frequency")
+colnames(table4) <- c("Machine", "Frequency")
 
 my_table(table1)
 my_table(table2)
 my_table(table3)
 my_table(table4)
+```
 
+```{r}
+table1 <- as.data.table(table(cluster1$PurchaseLocation))
+colnames(table1) <- c("PurchaseLocation", "Frequency")
+  
+table2 <- as.data.table(table(cluster2$PurchaseLocation) )
+colnames(table2) <- c("PurchaseLocation", "Frequency")
+
+table3 <- as.data.table(table(cluster3$PurchaseLocation) )
+colnames(table3) <- c("PurchaseLocation", "Frequency")
+
+table4 <- as.data.table(table(cluster4$PurchaseLocation) )
+colnames(table4) <- c("PurchaseLocation", "Frequency")
+
+my_table(table1)
+my_table(table2)
+my_table(table3)
+my_table(table4)
+```
+
+
+```{r}
+table1 <- as.data.table(table(cluster1$Frequency_Specialty))
+colnames(table1) <- c("PurchaseLocation", "Frequency")
+  
+table2 <- as.data.table(table(cluster2$Frequency_Specialty) )
+colnames(table2) <- c("Frequency_Specialty", "Frequency")
+
+table3 <- as.data.table(table(cluster3$Frequency_Specialty) )
+colnames(table3) <- c("Frequency_Specialty", "Frequency")
+
+table4 <- as.data.table(table(cluster4$Frequency_Specialty) )
+colnames(table4) <- c("Frequency_Specialty", "Frequency")
+
+my_table(table1)
+my_table(table2)
+my_table(table3)
+my_table(table4)
 ```
 
 ```{r}
@@ -183,48 +468,13 @@ Results_Round <- round(Results)
 my_table(Results_Round)
 ```
 
-#### 
+***
 
-### Clustering only the numerical
+## References
 
-```{r}
-NumMydata <- na.omit(Orgdata[,c(1:12)]) # listwise deletion of missing
-Mydata <- scale(Orgdata[,c(1:12)]) # standardize variables
-```
-
-```{r}
-set.seed(123)
-
-# K-Means Cluster Analysis
-fit <- kmeans(na.omit(Mydata), 3, nstart = 1) #3 cluster solution
-# get cluster means
-aggregate(na.omit(Mydata),by=list(fit$cluster),FUN=mean)
-# append cluster assignment
-mydata <- data.frame(na.omit(Mydata), fit$cluster)
-
-clusplot(mydata, fit$cluster, color=TRUE, shade=TRUE,
-   labels=2, lines=0)
-```
-
-```{r}
-fviz_cluster(fit, geom = "point", data = mydata, outlier.color = "black", palette = dani) +
-  ggtitle("k = 3")
-
-```
 
 <https://towardsdatascience.com/clustering-analysis-in-r-using-k-means-73eca4fb7967>
 
-```{r}
-mydata <- na.omit(mydata)
-
-distance <- get_dist(mydata)
-graph <- fviz_dist(distance, gradient = list(low = "#00AFBB", mid = "white", high = "#FC4E07"))
-
-set.seed(224)
-
-fviz_nbclust(mydata, kmeans, method = "wss")
+<http://www.sthda.com/english/articles/31-principal-component-methods-in-r-practical-guide/112-pca-principal-component-analysis-essentials/> 
 
 
-sil <- silhouette(fit$cluster, dist(mydata))
-fviz_silhouette(sil)
-```
