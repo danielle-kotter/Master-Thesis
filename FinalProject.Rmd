@@ -777,5 +777,5 @@ Methods, and Drawbacks. [online] Available at:
 
 Vertica. 2021. Finding the "K" in K-means Clustering With a UDx \|
 Vertica. [online] Available at:
-<https://www.vertica.com/blog/finding-the-k-in-k-means-clustering-with-a-udf/>
+<https://www.vertica.com/blog/finding-the-k-in-k-means-clustering-with-a-udf>
 [Accessed 1 July 2021].
