@@ -7,3 +7,5 @@ For the purpose of the business plan, I conducted a survey and collected a sampl
 The following report includes a clustering approach to buyer personas, a principal component and a correspondence analysis. After initially evaluating univariate descriptions of the entire sample throughout the business plan, the next step was to perform cluster analysis for the purpose of identifying patterns in attitude and preferences to create segments of consumers for marketing purposes. These segments (or cluster groups) are then profiled to create the “buyer personas”. The most promising buyer persona will then be targeted in the positioning and marketing strategy.
 
 The principal component analysis strives to find the attributes that differentiates the cluster groups. Lastly, the correspondence analysis evaluates the difference between the behaviors or habits within variation of explanatory variables.
+
+I recommend starting with the PDF called "Final Project" to read the summary of the project. For further r-scripts please refer to "BackgroundFiles".
