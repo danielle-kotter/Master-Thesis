@@ -1,0 +1,713 @@
+---
+title: "ThesisSurveyCluster"
+date: "`r format(Sys.Date(), '%d %B, %Y')`"
+output:
+  pagedown::html_paged:
+    css: www/my_css.css
+    number_sections: no
+knit: pagedown::chrome_print
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, class.source = "watch-out", options(scipen=999), out.width = "65%", warning = FALSE, comment = "") 
+source("www/init.R")
+source("www/Table_Design.R")
+```
+
+```{r, echo=FALSE}
+htmltools::img(
+  src = knitr::image_uri(file.path("www/BSM_Logo.png")), 
+  alt = 'logo', 
+  style = 'position:absolute; top:0; right:5px; padding:10px; width:200px'
+)
+```
+
+# Clustering & Correspondence analysis
+
+**Steps:** 1. Decide which columns to use, decide coding to get homogeneous for clustering
+
+2\. Clustering
+
+3\. Correspondence analysis, bring in demographics.
+
+4\. Individual cluster analysis - sub-sample
+
+## Loading datasets & Packages
+
+```{r data, echo=FALSE, include=FALSE}
+data <- read_excel("Main doc survey.xlsx")
+attach(data)
+
+dani <- c( "#ffa500", "#34495E", "#69b3a2", "#ffd561", "#ee5c42", "#DAF7A6", "#C8A2C8", "#5c3170", "#990000", "#C70039", "#34495E", "#909497")
+
+pal9 <- jcolors("pal9")
+
+library(FactoMineR)
+library(factoextra)
+```
+
+[Reference to Methodology applied.](https://towardsdatascience.com/k-means-clustering-algorithm-applications-evaluation-methods-and-drawbacks-aa03e644b48a "Reference to Methodology applied."){.uri}
+
+### Transforming variables
+
+Primarily several multi-option variables are removed from the data set. Next dummies are created for the categorical variables.
+
+*If the option is not selected, the answer corresponds with 0.\
+If the option has been selected, the answer corresponds with 1.*
+
+```{r}
+data <- separate(
+  data,
+  Criteria_Type_Coffee,
+  into = c("Criteria_A", "Criteria_B"),
+  sep = "([,])",
+  remove = TRUE,
+  convert = FALSE,
+  extra = "drop",
+  fill = "right",
+)
+
+data <- separate(
+  data,
+  Subscription_Not_Likely,
+  into = c("Subscription_A", "Subscription_B"),
+  sep = "([,])",
+  remove = TRUE,
+  convert = FALSE,
+  extra = "drop",
+  fill = "right",
+)
+
+data <- separate(
+  data,
+  "Supermarket_Negative_ Reasons",
+  into = c("Supermarket_NO_A", "Supermarket_NO_B"),
+  sep = "([,])",
+  remove = TRUE,
+  convert = FALSE,
+  extra = "drop",
+  fill = "right",
+)
+
+data <- separate(
+  data,
+  "Supermarket_Positive_ Reasons",
+  into = c("Supermarket_YES_A", "Supermarket_YES_B"),
+  sep = "([,])",
+  remove = TRUE,
+  convert = FALSE,
+  extra = "drop",
+  fill = "right",
+)
+```
+
+
+### One-hot Encoding
+
+The variables selected for clustering are:
+1. Purchase Location
+2. Frequency Specialty coffee consumption
+3. Amount brand change
+4. Amount consumed per week
+5. Money spend on coffee
+6. Likeliness to set up and app
+7. Likeliness to set up and subscription
+
+```{r, echo=FALSE}
+data <- data[,-match(c("Language", "Participant", "Home", "Occupation", "Gender", "Education", "AgeCategory", "Criteria_A", "Criteria_B", "Subscription_B", "Supermarket_NO_B", "Supermarket_YES_A", "Supermarket_YES_B", "Machine", "MoneyGroceries", "AmountOutMonth", "Subscription_A", "Supermarket_NO_A"),names(data))]
+
+dataf <- dummy_cols(data, select_columns = c("BrandChange", "PurchaseLocation", "Frequency_Specialty"), remove_selected_columns = TRUE, ignore_na = TRUE)
+```
+
+Separate the second, responses to 0.1. Do not categorize on demographics together with the preferences. Everything to do with coffee has to be in cluster analysis.
+
+## Clustering including categorical variables
+
+The next step is to remove this missing variables (NA), standardize the numerical variables and combine to make the new data table to be used for the cluster analysis.
+
+```{r}
+# Prepare Data
+Orgdata <- na.omit(dataf[,c(11:23)]) # listwise deletion of missing
+NewData <- scale(dataf[,c(0:23)]) # standardize variables
+```
+
+### Correlation Matrix
+
+```{r, echo=FALSE, out.width="110%"}
+dataset <- read_excel("Main doc survey.xlsx")
+dataset <- dataset[,c(2:5, 12, 19, 21)]
+
+pairs.panels(dataset,
+method = "pearson",
+hist.col = "#00AFBB",
+density = TRUE,
+ellipses = TRUE
+)
+```
+
+## Performing clusters
+
+```{r}
+set.seed(1234)
+
+# K-Means Cluster Analysis
+fit <- kmeans(na.omit(NewData), centers = 4, nstart = 50) #4 cluster solution
+fit$betweenss/fit$totss
+
+fit2 <- kmeans(na.omit(NewData), centers = 3, nstart = 50) #3 cluster solution
+fit2$betweenss/fit2$totss
+
+fit3 <- kmeans(na.omit(NewData), centers = 2, nstart = 50) #2 cluster solution
+fit3$betweenss/fit3$totss
+
+fit4 <- kmeans(na.omit(NewData), centers =1, nstart = 50) #1 cluster solution
+fit4$betweenss/fit4$totss
+```
+
+% between-group variance: 
+
+## Finding optimal number of clusters
+
+Although the execution of the algorithm always improves the
+Ward criterion at each step and converges, that does not mean
+that the final solution is the best one (i.e., it does not
+necessarily maximize between necessarily maximize between
+
+-group variance equivalent to group variance, equivalent to
+minimizing within-group variance). It depends on the starting
+seeds.
+
+• SOLUTION: Repeat the algorithm repeatedly from different
+starting seeds and choose the best solution. Often there are
+several identical best solutions from different starting points.
+
+• The algorithm applies to a pre-defined number of clusters.
+How many clusters should be retained?
+
+• SOLUTION: Repeat the whole process on different numbers of
+clusters, compare the solutions and decide what appears to be
+an empirically justified number of clusters, combined on
+domain knowledge domain knowledge.
+
+```{r}
+## looping on k-means algorithm to decide how many clusters
+set.seed(1234)
+lifestyle.BW <- rep(0, 10)
+for(nc in 2:10) {
+  lifestyle.km <- kmeans(NewData, centers=nc, nstart=20, iter.max=200)
+  lifestyle.BW[nc] <- lifestyle.km$betweenss/lifestyle.km$totss
+}
+lifestyle.BW
+
+## plot the proportion of between-cluster variance
+par(mar=c(4.2,4,1,2), cex.axis=0.8, mfrow=c(1,2))
+plot(lifestyle.BW, xlab="Nr of clusters", ylab="BSS/TSS")
+
+## plot the increments in between-cluster variance
+lifestyle.BWinc <- lifestyle.BW[2:10]-lifestyle.BW[1:9]  
+plot(1:10, c(NA,NA, lifestyle.BWinc[2:9]), xlab="Nr of clusters", ylab="improvement")
+lines(3:10, lifestyle.BWinc[2:9], col="red", lwd=2)
+```
+
+### Elbow method
+
+Based on the graph below, I have decided to use 4 numbers of cluster.
+
+**Distance**
+
+```{r}
+NewData <- na.omit(NewData)
+distance <- get_dist(NewData)
+graph <- fviz_dist(distance, gradient = list(low = "#00AFBB", mid = "white", high = "#FC4E07"))
+```
+
+```{r}
+library("NbClust")
+
+# Elbow method
+fviz_nbclust(NewData, kmeans, method = "wss") +
+    geom_vline(xintercept = 3, linetype = 2)+
+  labs(subtitle = "Elbow method")
+```
+
+### Average silhoutte method
+
+The average silhouette approach we'll be described comprehensively in the chapter cluster validation statistics. Briefly, it measures the quality of a clustering. That is, it determines how well each object lies within its cluster. A high average silhouette width indicates a good clustering.
+
+Average silhouette method computes the average silhouette of observations for different values of k. The optimal number of clusters k is the one that maximize the average silhouette over a range of possible values for k (Kaufman and Rousseeuw 1990).
+
+```{r}
+# Silhouette method
+fviz_nbclust(NewData, kmeans, method = "silhouette")+
+  labs(subtitle = "Silhouette method") +
+  geom_vline(xintercept = 3, linetype = 2)
+```
+
+```{r}
+sil <- silhouette(fit$cluster, dist(NewData))
+fviz_silhouette(sil)
+
+sil <- silhouette(fit2$cluster, dist(NewData))
+fviz_silhouette(sil)
+
+sil <- silhouette(fit3$cluster, dist(NewData))
+fviz_silhouette(sil)
+```
+
+```{r}
+# Gap statistic
+# nboot = 50 to keep the function speedy. 
+# recommended value: nboot= 500 for your analysis.
+# Use verbose = FALSE to hide computing progression.
+set.seed(123)
+fviz_nbclust(NewData, kmeans, nstart = 25,  method = "gap_stat", nboot = 50, verbose = FALSE)+
+  labs(subtitle = "Gap statistic method")
+```
+
+<http://web.stanford.edu/~hastie/Papers/gap.pdf>
+
+<http://www.datanovia.com/en/lessons/determining-the-optimal-number-of-clusters-3-must-know-methods/#at_pco=wnm-1.0&at_si=609664423560aa01&at_ab=per-2&at_pos=0&at_tot=1>
+
+**Adding cluster classification to the original data set**
+
+```{r}
+# append cluster assignment
+mydata <- data.frame(na.omit(dataf), cluster = fit$cluster)
+```
+
+**Getting cluster means:**
+
+```{r}
+fitMeans <- aggregate(mydata,
+  by=list(cluster = fit2$cluster),
+  FUN=mean
+  )
+
+fitMeans <- round(fitMeans,1)
+my_table(fitMeans)
+```
+
+**Getting cluster medians:**
+
+```{r}
+fitMeans <- aggregate(mydata,
+  by=list(cluster = fit$cluster),
+  FUN=median
+  )
+
+fitMeans <- round(fitMeans,1)
+my_table(fitMeans)
+```
+
+**Summary fit k=4**
+
+```{r}
+print(fit2)
+```
+
+## Validation testing
+
+<https://www.datanovia.com/en/lessons/cluster-validation-statistics-must-know-methods/>
+
+Generally, clustering validation statistics can be categorized into 3 classes (Charrad et al. 2014,Brock et al. (2008), Theodoridis and Koutroumbas (2008)):
+
+1.  Internal cluster validation, which uses the internal information of the clustering process to evaluate the goodness of a clustering structure without reference to external information. It can be also used for estimating the number of clusters and the appropriate clustering algorithm without any external data.
+
+2.  External cluster validation, which consists in comparing the results of a cluster analysis to an externally known result, such as externally provided class labels. It measures the extent to which cluster labels match externally supplied class labels. Since we know the "true" cluster number in advance, this approach is mainly used for selecting the right clustering algorithm for a specific data set.
+
+3.  Relative cluster validation, which evaluates the clustering structure by varying different parameter values for the same algorithm (e.g.,: varying the number of clusters k). It's generally used for determining the optimal number of clusters.
+
+```{r}
+## perform nonparametric ANOVA between-clusters to get chi-squares and p-values
+var_names <- colnames(mydata[,-ncol(mydata)])
+
+anova_tests <- list() 
+for (var_name in var_names) {
+  anova_tests[[var_name]] <- kruskal.test(get(var_name) ~ cluster, data = mydata)
+}
+
+anova_tests
+```
+
+```{r}
+var_names <- colnames(mydata[,-ncol(mydata)])
+
+anova_tests <- list() 
+for (var_name in var_names) {
+  anova_tests[[var_name]] <- oneway.test(get(var_name) ~ cluster, data = mydata)
+}
+
+anova_tests
+```
+
+**Within sum of squares:**
+
+```{r}
+print(fit$withinss)
+print(fit2$withinss)
+print(fit3$withinss)
+```
+
+**Between sum of squares**
+
+```{r}
+print(fit$betweenss)
+print(fit2$betweenss)
+print(fit3$betweenss)
+print(fit4$betweenss)
+```
+
+**Total sum of squares**
+
+```{r}
+print(fit$totss)
+print(fit2$totss)
+print(fit3$totss)
+```
+
+```{r}
+cluster <- c(1:4)
+t.test(fit$withinss, cluster)
+t.test(fit2$withinss, cluster)
+t.test(fit3$withinss, cluster)
+```
+
+```{r}
+library("fpc")
+cluster.stats(d = dist(NewData), fit2$cluster)
+```
+
+**Creating new data sets for each cluster group**
+
+```{r}
+data <- read_excel("Main doc survey.xlsx")
+clustereddata <- cbind(data, Cluster = fit2$cluster)
+
+cluster1 <- subset(clustereddata, clustereddata$Cluster=='1')
+cluster2 <- subset(clustereddata, clustereddata$Cluster=='2')
+cluster3 <- subset(clustereddata, clustereddata$Cluster=='3')
+cluster4 <- subset(clustereddata, clustereddata$Cluster=='4')
+```
+
+## Visualizing clusters
+
+Provides ggplot2-based elegant visualization of partitioning methods including kmeans [stats package]; pam, clara and fanny [cluster package]; dbscan [fpc package]; Mclust [mclust package]; HCPC [FactoMineR]; hkmeans [factoextra]. Observations are represented by points in the plot, using principal components if ncol(data) \> 2. An ellipse is drawn around each cluster.
+
+```{r}
+# K-means clustering
+km.res <- eclust(stdata, "kmeans", k = 3, nstart = 25, graph = FALSE)
+# Visualize k-means clusters
+fviz_cluster(km.res, geom = "point", ellipse.type = "norm",
+             palette = "jco", ggtheme = theme_minimal())
+```
+
+```{r}
+fviz_cluster(fit2, geom = "point", data = stdata, outlier.color = "black", palette = dani) + ggtitle("k = 3")
+
+p1 <- fviz_cluster(fit, geom = "point", data = stdata, outlier.color = "black", palette = dani) + ggtitle("k = 4")
+
+p2 <- fviz_cluster(fit2, geom = "point", data = stdata, outlier.color = "black", palette = dani) + ggtitle("k = 3")
+
+p3 <- fviz_cluster(fit3, geom = "point", data = stdata, outlier.color = "black", palette = dani) + ggtitle("k = 2")
+
+p4 <- fviz_cluster(fit4, geom = "point", data = stdata, outlier.color = "black", palette = dani) + ggtitle("k = 1")
+
+grid.arrange(p1, p2, p3, p4, nrow = 2)
+```
+
+```{r}
+Subdata <- data.frame("Money Coffee" = clustereddata$MoneyCoffee, "Money Groceries" = clustereddata$MoneyGroceries, "Amount Out per month" = clustereddata$AmountOutMonth, 'Amount per week' = clustereddata$AmountWeek)
+
+par(mar=c(2,4,3,1), font.lab=2, mfrow=c(1,4), mgp=c(2,0.7,0))
+for(j in 1:4) boxplot(Subdata[,j] ~ clustereddata$Cluster, main=colnames(Subdata)[j], 
+                      col=c("#34495E", "#69b3a2"), ylab="%")
+```
+
+```{r}
+Subdata <- data.frame("Knowledge Coffee" = clustereddata$KnowledgeCoffee, 'Subscription Likeliness' = clustereddata$Subscription_Likely, "App Likeliness" = clustereddata$App_Likely)
+
+par(mar=c(2,4,3,1), font.lab=2, mfrow=c(1,3), mgp=c(2,0.7,0))
+for(j in 1:3) boxplot(Subdata[,j] ~ clustereddata$Cluster, main=colnames(Subdata)[j], 
+                      col=c("#34495E", "#69b3a2"), ylab="%")
+```
+
+```{r}
+Subdata <- data.frame(Price = clustereddata$Purchase_Price, Sustainability = clustereddata$Purchase_Sustainability, Certification = clustereddata$Purchase_Certificate, Fairtrade = clustereddata$Purchase_Fairtrade, Packaging = clustereddata$Purchase_Packaging)
+
+par(mar=c(2,4,3,1), font.lab=2, mfrow=c(1,5), mgp=c(2,0.7,0))
+for(j in 1:5) boxplot(Subdata[,j] ~ clustereddata$Cluster, main=colnames(Subdata)[j], 
+                      col=c("#34495E", "#69b3a2"), ylab="%")
+```
+
+## Robustness check
+
+Same but with other linkage methods etc. If you get a very different pattern, your results are not robust.
+
+\newpage
+
+### The clusters individual results
+
+```{r}
+data <- read_excel("Main doc survey.xlsx")
+clustereddata <- cbind(data, Cluster = fit2$cluster)
+
+cluster1 <- subset(clustereddata, clustereddata$Cluster=='1')
+cluster2 <- subset(clustereddata, clustereddata$Cluster=='2')
+cluster3 <- subset(clustereddata, clustereddata$Cluster=='3')
+```
+
+```{r}
+Results <- as.data.table(aggregate(na.omit(clustereddata[,2:5]), by=list(cluster=fit2$cluster), mean), by = round)
+
+Results_Round <- round(Results)
+my_table(Results_Round)
+```
+
+```{r}
+Results <- as.data.table(aggregate(na.omit(clustereddata[,c(12,19)]), by=list(cluster=fit2$cluster), median), by = round)
+
+Results_Round <- round(Results,1)
+
+my_table(Results_Round)
+```
+
+
+```{r}
+Results <- as.data.table(aggregate(na.omit(clustereddata[,13:17]), by=list(cluster=clustereddata$Cluster), median), by = round)
+
+Results_Round <- round(Results)
+my_table(Results_Round)
+```
+
+```{r}
+agetable1 <- as.data.table(table(cluster1$AgeCategory))
+colnames(agetable1) <- c("Age", "Frequency")
+  
+agetable2 <- as.data.table(table(cluster2$AgeCategory) )
+colnames(agetable2) <- c("Age", "Frequency")
+
+agetable3 <- as.data.table(table(cluster3$AgeCategory) )
+colnames(agetable3) <- c("Age", "Frequency")
+
+my_table(agetable1)
+my_table(agetable2)
+my_table(agetable3)
+```
+
+```{r, echo=FALSE}
+Absolute <- data.table(Frequency = table(cluster2$Machine))
+Relative <- percent(prop.table(Absolute$Frequency.N))
+freqtable <- cbind(Absolute, Relative)
+colnames(freqtable) <- c("Machine", "Absolute", "Relative")
+
+my_table(freqtable)
+```
+
+```{r, echo=FALSE}
+dataB <- data.frame(
+  group=freqtable$Machine,
+  value=freqtable$Relative
+)
+
+blank_theme <- theme_minimal()+
+    theme(
+        plot.title = element_text(size = 20, face = "bold")
+    )
+
+ggplot(dataB, aes(x="",y = value, fill = group)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start = 0) +
+  scale_fill_manual("Purchase method:", values = dani)+
+  blank_theme  +
+    theme(axis.text.x=element_blank(), 
+          legend.title = element_text(face = "bold")) +
+  geom_text(aes(x = 1.1, label = value),
+              position = position_stack(vjust = 0.5),
+              size = 3, 
+              check_overlap = TRUE,
+              fontface = "bold") +
+  labs(title = "",
+         x = "",
+         y = ""
+         )
+```
+
+
+```{r}
+table1 <- as.data.table(table(cluster1$Machine))
+colnames(table1) <- c("Machine", "Frequency")
+  
+table2 <- as.data.table(table(cluster2$Machine) )
+colnames(table2) <- c("Machine", "Frequency")
+
+table3 <- as.data.table(table(cluster3$Machine) )
+colnames(table3) <- c("Machine", "Frequency")
+
+my_table(table1)
+my_table(table2)
+my_table(table3)
+```
+
+```{r}
+table1 <- as.data.table(table(cluster1$PurchaseLocation))
+colnames(table1) <- c("PurchaseLocation", "Frequency")
+  
+table2 <- as.data.table(table(cluster2$PurchaseLocation) )
+colnames(table2) <- c("PurchaseLocation", "Frequency")
+
+table3 <- as.data.table(table(cluster3$PurchaseLocation) )
+colnames(table3) <- c("PurchaseLocation", "Frequency")
+
+my_table(table1)
+my_table(table2)
+my_table(table3)
+```
+
+```{r}
+table1 <- as.data.table(table(cluster1$Frequency_Specialty))
+colnames(table1) <- c("PurchaseLocation", "Frequency")
+  
+table2 <- as.data.table(table(cluster2$Frequency_Specialty) )
+colnames(table2) <- c("Frequency_Specialty", "Frequency")
+
+table3 <- as.data.table(table(cluster3$Frequency_Specialty) )
+colnames(table3) <- c("Frequency_Specialty", "Frequency")
+
+my_table(table1)
+my_table(table2)
+my_table(table3)
+```
+
+```{r}
+table1 <- as.data.table(table(cluster1$AgeCategory))
+colnames(table1) <- c("PurchaseLocation", "Frequency")
+  
+table2 <- as.data.table(table(cluster2$AgeCategory) )
+colnames(table2) <- c("Frequency_Specialty", "Frequency")
+
+table3 <- as.data.table(table(cluster3$AgeCategory) )
+colnames(table3) <- c("Frequency_Specialty", "Frequency")
+
+my_table(table1)
+my_table(table2)
+my_table(table3)
+```
+
+# Clusters groups
+
+```{r}
+data <- read_excel("Main doc survey.xlsx")
+clustereddata <- cbind(data, Cluster = fit2$cluster)
+
+cluster1 <- clustereddata[clustereddata$Cluster=='1',]
+cluster2 <- clustereddata[clustereddata$Cluster=='2',]
+cluster3 <- clustereddata[clustereddata$Cluster=='3',]
+```
+
+## Cluster 1 medians
+
+```{r}
+var_names <- colnames(cluster1[,-ncol(cluster1)])
+
+medians1 <- list() 
+for (var_name in var_names) {
+  medians1[[var_name]] <- median(get(var_name), data=cluster1)
+}
+
+medians1
+```
+
+## Cluster 2 medians
+
+```{r}
+var_names <- colnames(cluster2[,-ncol(cluster2)])
+
+medians2 <- list() 
+for (var_name in var_names) {
+  medians2[[var_name]] <- median(get(var_name), data = cluster2)
+}
+
+medians2
+```
+
+## Cluster 3 medians
+
+```{r}
+var_names <- colnames(cluster3[,-ncol(cluster3)])
+
+medians3 <- list() 
+for (var_name in var_names) {
+  medians3[[var_name]] <- median(get(var_name))
+}
+
+medians3
+```
+
+
+
+------------------------------------------------------------------------
+
+## Appendices
+
+Data set
+
++------------------------------+----------------------------------------------------------------------------------------+-------------------------+
+| Field                        | Description                                                                            | Scales                  |
++=============================:+:=======================================================================================+=========================+
+| AmountWeek                   | How many cups of coffee do you typically consume weekly?                               | Ratio, Continous        |
++------------------------------+----------------------------------------------------------------------------------------+-------------------------+
+| AmountOutMonth               | How frequently do you drink out-of-home per month on average?                          | Ratio, Continous        |
++------------------------------+----------------------------------------------------------------------------------------+-------------------------+
+| MoneyCoffee                  | How much money on average do you estimate you spend on coffee per month?               | Ratio, Continous        |
++------------------------------+----------------------------------------------------------------------------------------+-------------------------+
+| MoneyGroceries               | How much on average do you spend on general groceries per month?                       | Ratio, Continous        |
++------------------------------+----------------------------------------------------------------------------------------+-------------------------+
+| Machine                      | How do you brew your coffee at home?                                                   | Nominal                 |
++------------------------------+----------------------------------------------------------------------------------------+-------------------------+
+| Brand change                 | How often do you switch between coffee brands?                                         | Nominal                 |
++------------------------------+----------------------------------------------------------------------------------------+-------------------------+
+| Purchase location            | Where do you usually purchase your coffee?                                             | Nominal                 |
++------------------------------+----------------------------------------------------------------------------------------+-------------------------+
+| Supermarket_Positive_Reasons | When you purchase coffee from the supermarket what are your main reasons for doing so? | Nominal                 |
++------------------------------+----------------------------------------------------------------------------------------+-------------------------+
+| Supermarket_Negative_Reasons | What would be reasons why you would not purchase coffee from the supermarket?          | Nominal                 |
++------------------------------+----------------------------------------------------------------------------------------+-------------------------+
+| Criteria_Type_Coffee         | What are your main criteria's or evaluation points for choosing the type of coffee?    | Nominal                 |
++------------------------------+----------------------------------------------------------------------------------------+-------------------------+
+| KnowledgeCoffee              | How would you describe your knowledge level regarding coffee in general?               | Ordinal. 0-10, Discrete |
++------------------------------+----------------------------------------------------------------------------------------+-------------------------+
+| Purchase_Price               | I believe that the \_\_\_\_ is important to my decision on which coffee to purchase.   | Ordinal, likert 0-5     |
++------------------------------+----------------------------------------------------------------------------------------+-------------------------+
+| Purchase_Sustainability      | I believe that the \_\_\_\_ is important to my decision on which coffee to purchase.   | Ordinal, likert 0-5     |
++------------------------------+----------------------------------------------------------------------------------------+-------------------------+
+| Purchase_Sustainability      | I believe that the \_\_\_\_ is important to my decision on which coffee to purchase.   | Ordinal, likert 0-5     |
++------------------------------+----------------------------------------------------------------------------------------+-------------------------+
+| Purchase_Fairtrade           | I believe that the \_\_\_\_ is important to my decision on which coffee to purchase.   | Ordinal, likert 0-5     |
++------------------------------+----------------------------------------------------------------------------------------+-------------------------+
+| Purchase_Packaging           | I believe that the \_\_\_\_ is important to my decision on which coffee to purchase.   | Ordinal, likert 0-5     |
++------------------------------+----------------------------------------------------------------------------------------+-------------------------+
+| Frequency_Specialty          | How often do you drink specialty coffee?                                               | Ordinal                 |
++------------------------------+----------------------------------------------------------------------------------------+-------------------------+
+| Subscription_Likely          | How likely are you to have an online subscription for (specialty) coffee?              | Ordinal 0-10, Discrete  |
++------------------------------+----------------------------------------------------------------------------------------+-------------------------+
+| Subscription_Not_Likely      | What is the number one reasons why you would be hesitant?                              | Nominal                 |
++------------------------------+----------------------------------------------------------------------------------------+-------------------------+
+| App_Likely                   | How likely are you to value and use an app for your online subscription?               | Ordinal, 0-10, Discrete |
++------------------------------+----------------------------------------------------------------------------------------+-------------------------+
+| Gender                       | What is your gender?                                                                   | Nominal                 |
++------------------------------+----------------------------------------------------------------------------------------+-------------------------+
+| AgeCategory                  | What is your age category?                                                             | Ordinal                 |
++------------------------------+----------------------------------------------------------------------------------------+-------------------------+
+| Occupation                   | What is your occupational status?                                                      | Nominal                 |
++------------------------------+----------------------------------------------------------------------------------------+-------------------------+
+| Education                    | What level of education have you completed?                                            | Ordinal                 |
++------------------------------+----------------------------------------------------------------------------------------+-------------------------+
+| Home                         | How would you describe the place you currently live in?                                | Nominal                 |
++------------------------------+----------------------------------------------------------------------------------------+-------------------------+
+
+
+## References
+
+<https://towardsdatascience.com/clustering-analysis-in-r-using-k-means-73eca4fb7967>
+
+<http://www.sthda.com/english/articles/31-principal-component-methods-in-r-practical-guide/112-pca-principal-component-analysis-essentials/>

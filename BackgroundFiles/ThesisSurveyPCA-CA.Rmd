@@ -1,0 +1,563 @@
+---
+title: "ThesisSurveyPCA-CA"
+date: "`r format(Sys.Date(), '%d %B, %Y')`"
+output:
+  pagedown::html_paged:
+    css: www/my_css.css
+    number_sections: no
+knit: pagedown::chrome_print
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, class.source = "watch-out", options(scipen=999), warning = FALSE, comment = "") 
+source("www/init.R")
+source("www/Table_Design.R")
+```
+
+## Loading datasets & Packages
+
+```{r data, echo=FALSE, include=FALSE}
+data <- read_excel("DataSet/Main doc survey.xlsx")
+attach(data)
+
+dani <- c( "#ffa500", "#34495E", "#69b3a2", "#ffd561", "#ee5c42", "#DAF7A6", "#C8A2C8", "#5c3170", "#990000", "#C70039", "#34495E", "#909497")
+
+pal9 <- jcolors("pal9")
+
+#Loading packages
+library(devtools)
+library(ggbiplot)
+library(FactoMineR)
+library(factoextra)
+library(ggrepel)
+```
+
+```{r}
+data <- separate(
+  data,
+  Criteria_Type_Coffee,
+  into = c("Criteria_A", "Criteria_B"),
+  sep = "([,])",
+  remove = TRUE,
+  convert = FALSE,
+  extra = "drop",
+  fill = "right",
+)
+
+data <- separate(
+  data,
+  Subscription_Not_Likely,
+  into = c("Subscription_A", "Subscription_B"),
+  sep = "([,])",
+  remove = TRUE,
+  convert = FALSE,
+  extra = "drop",
+  fill = "right",
+)
+
+data <- separate(
+  data,
+  "Supermarket_Negative_ Reasons",
+  into = c("Supermarket_NO_A", "Supermarket_NO_B"),
+  sep = "([,])",
+  remove = TRUE,
+  convert = FALSE,
+  extra = "drop",
+  fill = "right",
+)
+
+data <- separate(
+  data,
+  "Supermarket_Positive_ Reasons",
+  into = c("Supermarket_YES_A", "Supermarket_YES_B"),
+  sep = "([,])",
+  remove = TRUE,
+  convert = FALSE,
+  extra = "drop",
+  fill = "right",
+)
+```
+
+```{r, echo=FALSE}
+# Excluding variables from the data set
+data <- data[,-match(c("Language", "Participant", "Home", "Occupation", "Gender", "Education", "AgeCategory", "Criteria_A", "Criteria_B", "Subscription_B", "Supermarket_NO_B", "Supermarket_YES_A", "Supermarket_YES_B", "Machine", "MoneyGroceries", "AmountOutMonth", "Subscription_A", "Supermarket_NO_A"),names(data))]
+
+# Creating dummy variables through one-hot encoding
+dataf <- dummy_cols(data, select_columns = c("BrandChange", "PurchaseLocation", "Frequency_Specialty"), remove_selected_columns = TRUE, ignore_na = TRUE)
+```
+
+```{r}
+# Preparing the Data
+Orgdata <- na.omit(dataf[,c(11:23)]) #listwise deletion of missing
+NewData <- scale(dataf[,c(0:23)]) # standardize variables
+```
+
+## Creating clusters
+
+```{r}
+set.seed(1234)
+
+# K-Means Cluster Analysis
+fit <- kmeans(na.omit(NewData), centers = 3, nstart = 50) #3 cluster solution
+```
+
+
+## Principal Component analysis
+
+```{r, setting up}
+# New variable containing cluster group numbers
+Cluster <- factor(fit$cluster)
+```
+
+```{r}
+# Multi-dimensional scaling - PCA
+pca.mds <- prcomp(NewData, scale. = TRUE)
+```
+
+```{r}
+#Biplot
+ggbiplot(pca.mds, 
+         groups = Cluster, 
+         ellipse=TRUE,
+         obs.scale = 1, 
+         var.scale = 1,
+         loadings.label.repel=T,
+         #varname.abbrev = TRUE,
+         ) +
+        scale_colour_manual(
+           name="Clusters", 
+           values= c("#34495E", "#69b3a2", "#ffd561")
+           ) +
+        ggtitle("PCA Cluster Groups"
+                )+
+        theme_minimal()+
+        theme(legend.position = "bottom")
+```
+
+Source used:<https://www.datacamp.com/community/tutorials/pca-analysis-r> 
+
+```{r}
+# Analyzing distances
+DK.dist <- dist(NewData)
+DK.mds <- cmdscale(DK.dist, eig=TRUE)
+DK.mds$GOF
+```
+
+```{r}
+DK.PCA <- PCA(as.matrix(NewData), weight=FALSE)
+par(mar=c(4.2,4,4,1), font.lab=2, cex.axis=0.8, mgp=c(2.5,0.7,0))
+
+PLOT.PCA(DK.PCA, map="asymmetric", rescale=3, main="PCA with chi-square standardization")
+```
+
+```{r}
+fviz_eig(pca.mds, addlabels = TRUE, ylim = c(0, 50))
+```
+
+### Biplots
+
+cluster 2 - subsetting NewData clusters 
+
+cluster2Prep <- subset(clustereddata, cluster2)
+
+cluster2Prep <- cluster2Prep[,c(14:23)]
+
+```{r}
+clustereddata <- cbind(data, Cluster = fit$cluster)
+cluster2 <- clustereddata[clustereddata$Cluster=='2',]
+cluster2Prep <- cluster2[,c(3,4,11)]
+```
+
+```{r}
+pca.mds <- prcomp(cluster2Prep, scale. = TRUE)
+
+fviz_pca_biplot(pca.mds, label = "var",
+                addEllipses = TRUE, 
+                col.var = "#34495E",
+                label.repel = TRUE,
+                max.overlaps = 2,
+                loadings.label.repel = TRUE,
+                legend.title = "Cluster 2 PCA") 
+```
+
+```{r}
+clusters <- as.factor(fit$cluster)
+pca.mds <- prcomp(NewData, scale. = TRUE)
+
+fviz_pca_biplot(pca.mds, 
+                col.ind = clusters, 
+                palette = c("#ffa500", "#34495E", "#69b3a2"),
+                addEllipses = TRUE, 
+                label = "var",
+                col.var = "black",
+                label.repel = TRUE,
+                max.overlaps=10,
+                loadings.label.repel = TRUE,
+                legend.title = "Clusters")
+```
+
+**Sub setted data**
+
+```{r}
+data <- read_excel("DataSet/Main doc survey.xlsx")
+clustereddata <- cbind(data, Cluster = fit$cluster)
+
+cluster1 <- subset(clustereddata, clustereddata$Cluster=='1')
+cluster2 <- subset(clustereddata, clustereddata$Cluster=='2')
+cluster3 <- subset(clustereddata, clustereddata$Cluster=='3')
+```
+
+```{r}
+clusters <- as.factor(fit$cluster)
+
+Subdata <- data.frame(Price = clustereddata$Purchase_Price, Sustainability = clustereddata$Purchase_Sustainability, Certification = clustereddata$Purchase_Certificate, Fairtrade = clustereddata$Purchase_Fairtrade, Packaging = clustereddata$Purchase_Packaging)
+
+Sub.data.pca.mds <- prcomp(Subdata, scale. = TRUE)
+
+fviz_pca_biplot(Sub.data.pca.mds, 
+                col.ind = clusters, palette = c("#ffa500", "#34495E", "#69b3a2", "#ffd561"),
+                addEllipses = FALSE, label = "var",
+                col.var = "black",
+                legend.title = "Clusters")+ 
+  theme(panel.background = element_rect("lightgrey"))
+```
+
+```{r, echo=FALSE, include=FALSE}
+require(rgl)
+DK2.dist <- dist(NewData)
+DK.mds <- cmdscale(DK2.dist, eig=TRUE, k=4)
+plot3d(DK.mds$points[,c(1,3,2)], xlab="dim1", ylab="dim3", zlab="dim2", type="p")
+
+play3d(spin3d(c(0,0,1)), duration=12)
+
+#rgl.snapshot("view3D.png")
+```
+
+
+```{r}
+pca.mds <- prcomp(NewData, scale. = TRUE)
+# Contributions of variables to PC1
+fviz_contrib(pca.mds, choice = "var", axes = 1, top = 10)
+# Contributions of variables to PC2
+fviz_contrib(pca.mds, choice = "var", axes = 2, top = 10)
+```
+
+```{r}
+grp <- as.factor(fit$cluster)
+
+# Color variables by groups
+fviz_pca_var(pca.mds, col.var = grp,
+             palette = dani,
+             legend.title = "Cluster")
+```
+
+## Correspondence Analysis
+
+Cross tabulations, two categorical variables
+
+```{r}
+data <- read_excel("DataSet/Main doc survey.xlsx")
+library(easyCODA)
+names(data)
+```
+
+```{r}
+Sub_Likely <- rep(1,nrow(data))
+
+Sub_Likely[data$Subscription_Likely %in% c(1,2)] <- 1
+Sub_Likely[data$Subscription_Likely %in% c(3,4)] <- 2
+Sub_Likely[data$Subscription_Likely %in% c(5,6)] <- 3
+Sub_Likely[data$Subscription_Likely %in% c(7,8)] <- 4
+Sub_Likely[data$Subscription_Likely %in% c(9,10)] <- 5
+
+Sub_Likely.names <- c("1-2","3-4","5-6","7-8","9-10")
+
+table(Sub_Likely)
+```
+
+```{r}
+App_LikelyNew <- rep(1,nrow(data))
+
+App_LikelyNew[data$App_Likely %in% c(1,2)] <- 1
+App_LikelyNew[data$App_Likely %in% c(3,4)] <- 2
+App_LikelyNew[data$App_Likely %in% c(5,6)] <- 3
+App_LikelyNew[data$App_Likely %in% c(7,8)] <- 4
+App_LikelyNew[data$App_Likely %in% c(9,10)] <- 5
+
+App_LikelyNew.names <- c("1-2","3-4","5-6","7-8","9-10")
+
+table(App_LikelyNew)
+```
+
+```{r}
+Education <- factor(Education)
+Home <- factor(Home)
+AgeCategory <- factor(AgeCategory)
+Gender <- factor(Gender)
+
+Gender_Age <- paste(AgeCategory, Gender, sep="")
+Gender_Age.Sub <- table(Gender_Age, Sub_Likely) 
+Gender_Age.App <- table(Gender_Age, App_LikelyNew) 
+```
+
+
+```{r}
+Gender_Age.Sub.App <- cbind(Gender_Age.Sub, Gender_Age.App)
+
+colnames(Gender_Age.Sub.App) <- c("Sub_1-2","Sub_3-4","Sub_5-6","Sub_7-8","Sub_9-10", 
+                                  "App_1-2","App_3-4","App_5-6","App_7-8","App_9-10")
+
+my_table(head(Gender_Age.Sub.App))
+```
+
+
+```{r}
+my.ca <- ca(Gender_Age.Sub.App)
+plot(my.ca, main="Gender and age variation between subscription and app likeliness", mass=c(TRUE,TRUE), col = c("#34495E", "#ffa500"), col.lab = c("#34495E", "#ffa500"), xlim=c(-1,0.5), ylim=c(-0.5,0.5)) 
+```
+
+**Inertia**
+
+```{r}
+sum(my.ca$sv^2)
+```
+
+```{r}
+coef <- sqrt(0.269975/(0.269975+1))
+coef.max <- sqrt(9/10)
+coef.st <- coef/coef.max
+coef.st
+```
+
+**Education vs Gender Vs Knowledge Coffee**
+
+```{r}
+KnowledgeCoffeeNew <- rep(1,nrow(data))
+
+KnowledgeCoffeeNew[data$KnowledgeCoffee %in% c(1,2)] <- 1
+KnowledgeCoffeeNew[data$KnowledgeCoffee %in% c(3,4)] <- 2
+KnowledgeCoffeeNew[data$KnowledgeCoffee %in% c(5,6)] <- 3
+KnowledgeCoffeeNew[data$KnowledgeCoffee %in% c(7,8)] <- 4
+KnowledgeCoffeeNew[data$KnowledgeCoffee %in% c(9,10)] <- 5
+
+KnowledgeCoffeeNew.names <- c("1-2","3-4","5-6","7-8","9-10")
+
+table(KnowledgeCoffeeNew)
+```
+
+```{r}
+Gender_Education <- paste(Education, Gender, sep="")
+Gender_Education.Know <- table(Gender_Education, KnowledgeCoffeeNew) 
+```
+
+```{r}
+colnames(Gender_Education.Know) <- c("Know_1-2","Know_3-4","Know_5-6","Know_7-8","Know_9-10")
+
+my_table(head(Gender_Education.Know))
+```
+
+```{r}
+my.ca <- ca(Gender_Education.Know)
+plot(my.ca, main="Education and gender variation between knowledge level coffee", mass=c(TRUE,TRUE), col = c("#34495E", "#ffa500"), col.lab = c("#34495E", "#ffa500"), xlim=c(-1.5,1), ylim=c(-0.5,0.7))
+```
+
+**Inertia**
+
+```{r}
+sum(my.ca$sv^2)
+```
+
+```{r}
+coef <- sqrt(0.264027/(0.264027+1))
+coef.max <- sqrt(9/10)
+coef.st <- coef/coef.max
+coef.st
+```
+
+
+**Education vs Gender Vs Subscriptions level**
+
+```{r}
+Gender_Education <- paste(Education, Gender, sep="")
+Gender_Education.Sub <- table(Gender_Education, Sub_Likely) 
+```
+
+```{r}
+colnames(Gender_Education.Sub) <- c("Sub_1-2","Sub_3-4","Sub_5-6","Sub_7-8","Sub_9-10")
+
+my_table(head(Gender_Education.Sub))
+```
+
+```{r}
+my.ca <- ca(Gender_Education.Sub)
+plot(my.ca, main="Education and gender variation between subscription likeliness", mass=c(TRUE,TRUE), col = c("#34495E", "#ffa500"), col.lab = c("#34495E", "#ffa500"), xlim=c(-0.9,1.4), ylim=c(-0.7,0.5))
+```
+
+**Inertia**
+
+```{r}
+sum(my.ca$sv^2)
+```
+
+**Gender vs Age vs Subscription level**
+
+```{r}
+Gender_Age <- paste(AgeCategory, Gender, sep="")
+Gender_Age.Sub <- table(Gender_Age, Sub_Likely) 
+```
+
+```{r}
+colnames(Gender_Age.Sub) <- c("Sub_1-2","Sub_3-4","Sub_5-6","Sub_7-8","Sub_9-10")
+
+my_table(head(Gender_Age.Sub))
+```
+
+```{r, fig.align='center'}
+my.ca <- ca(Gender_Age.Sub)
+plot(my.ca, main="Gender and age variation between subscription likeliness", mass=c(TRUE,TRUE), col = c("#34495E", "#ffa500"), col.lab = c("#34495E", "#ffa500"),xlim=c(-1.0,0.7), ylim=c(-0.7,0.5))
+```
+
+**Inertia**
+
+```{r}
+sum(my.ca$sv^2)
+```
+
+
+**Gender vs Age vs Knowledge level**
+
+```{r}
+Gender_Age <- paste(AgeCategory, Gender, sep="")
+Gender_Age.Know <- table(Gender_Age, KnowledgeCoffeeNew) 
+```
+
+```{r}
+colnames(Gender_Age.Know) <- c("Know_1-2","Know_3-4","Know_5-6","Know_7-8","Know_9-10")
+my_table(head(Gender_Age.Know))
+```
+
+```{r, fig.align='center'}
+my.ca <- ca(Gender_Age.Know)
+plot(my.ca, main="Gender and age variation between knowledge level coffee", mass=c(TRUE,TRUE), col = c("#34495E", "#ffa500"), col.lab = c("#34495E", "#ffa500"), 
+xlim=c(-1.2,0.6), ylim=c(-0.5,0.5))
+```
+
+**Inertia**
+
+```{r}
+sum(my.ca$sv^2)
+```
+
+
+**Gender vs Age vs Knowledge level vs subscription likely**
+
+```{r}
+Gender_Age <- paste(AgeCategory, Gender, sep="")
+Gender_Age.Sub <- table(Gender_Age, Sub_Likely) 
+Gender_Age.Know <- table(Gender_Age, KnowledgeCoffeeNew) 
+```
+
+```{r}
+Gender_Age.Sub.Know <- cbind(Gender_Age.Sub, Gender_Age.Know)
+
+colnames(Gender_Age.Sub.Know) <- c("Sub_1-2","Sub_3-4","Sub_5-6","Sub_7-8","Sub_9-10",
+                                  "Know_1-2","Know_3-4","Know_5-6","Know_7-8","Know_9-10")
+
+my_table(head(Gender_Age.Sub.Know))
+```
+
+```{r, fig.align='center'}
+my.ca <- ca(Gender_Age.Sub.Know)
+plot(my.ca, main="Gender+age variation subscription and knowledge level", mass=c(TRUE,TRUE), col = c("#34495E", "#ffa500"), col.lab = c("#34495E", "#ffa500"), 
+xlim=c(-2,0.5), ylim=c(-1,0.7))
+```
+
+**Inertia**
+
+```{r}
+sum(my.ca$sv^2)
+```
+
+
+**Gender vs Age vs Purchase Location vs Knowledge level**
+
+```{r}
+Gender_Age <- paste(AgeCategory, Gender, sep="")
+Gender_Age.Know <- table(Gender_Age, KnowledgeCoffeeNew) 
+Gender_Age.Purch <- table(Gender_Age, PurchaseLocation) 
+```
+
+```{r}
+Gender_Age.Know.Purch <- cbind(Gender_Age.Know, Gender_Age.Purch)
+
+colnames(Gender_Age.Know.Purch) <- c("Know_1-2","Know_3-4","Know_5-6","Know_7-8","Know_9-10", "E-com", "Online", "Cafés", "Super")
+
+my_table(head(Gender_Age.Know.Purch))
+```
+
+```{r, fig.align='center'}
+my.ca <- ca(Gender_Age.Know.Purch)
+plot(my.ca, main="Gender + age variation knowledge level and Purchase location", mass=c(TRUE,TRUE), col = c("#34495E", "#ffa500"), col.lab = c("#34495E", "#ffa500"), xlim=c(-0.3,0.5), ylim=c(-0.5,0.5))
+```
+
+**Inertia**
+
+```{r}
+sum(my.ca$sv^2)
+```
+
+
+**Purchase Location vs Knowledge level**
+
+```{r}
+Purch.Know <- table(PurchaseLocation, KnowledgeCoffeeNew) 
+Purch.Know
+```
+
+```{r}
+colnames(Purch.Know) <- c("Know_1-2","Know_3-4","Know_5-6","Know_7-8","Know_9-10")
+
+my_table(head(Purch.Know))
+```
+
+```{r, fig.align='center'}
+my.ca <- ca(Purch.Know)
+plot(my.ca, main="Variation between knowledge level and purchase location", mass=c(TRUE,TRUE), col = c("#34495E", "#ffa500"), col.lab = c("#34495E", "#ffa500"), xlim=c(-0.2,0.5), ylim=c(-0.5,0.4))
+```
+
+**Inertia**
+
+```{r}
+sum(my.ca$sv^2)
+```
+
+
+**Purchase Location vs Knowledge level vs Education**
+
+```{r}
+Gender_Education <- Education
+Gender_Education.Purch <- table(Gender_Education, KnowledgeCoffeeNew) 
+Gender_Education.Know <- table(Gender_Education, PurchaseLocation) 
+```
+
+```{r}
+Gender_Education.Know.Purch <- cbind(Gender_Education.Know, Gender_Education.Purch)
+
+colnames(Gender_Education.Know.Purch) <- c("Know_1-2","Know_3-4","Know_5-6","Know_7-8","Know_9-10", "E-com", "Online", "Cafés", "Super")
+
+my_table(head(Gender_Education.Know.Purch))
+```
+
+```{r, fig.align='center'}
+my.ca <- ca(Gender_Education.Know.Purch)
+plot(my.ca, main="Variation between knowledge level and purchase location", mass=c(TRUE,TRUE), col = c("#34495E", "#ffa500"), col.lab = c("#34495E", "#ffa500"), xlim=c(-0.7,1.8), ylim=c(-0.4,1))
+```
+
+**Inertia**
+
+```{r}
+sum(my.ca$sv^2)
+```
+
+
+

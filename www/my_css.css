@@ -1,13 +1,15 @@
 h1 {
+  font-size: 22px;
   color: #dd4132;
 }
 
 h2 {
-  font-size: 12px;
+  font-size: 16px;
+  color: #1B0C84;
 }
 
 h3 {
-  color: #1B0C84;
+  font-size: 13px;
 }
 
 body{ /* Normal  */
